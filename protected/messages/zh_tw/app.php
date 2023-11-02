@@ -82,11 +82,13 @@ return array(
     'Staff List'=>'員工名冊',
 
     //沈超添加開始
-    'Skill Setting'=>'技能配置',
-    'Area Setting'=>'區域配置',
-    'Service Type Setting'=>'服務配置',
-    'Customer Type Setting'=>'客戶類型配置',
-    'Pay Setting'=>'付款條款',
+    'menu setting'=>'菜單配置',
+    'Project manage'=>'項目管理',
+    'Project count'=>'項目統計',
+    'Username count'=>'賬號統計',
+    'Project analyze'=>'項目分析',
+    'Username analyze'=>'賬號分析',
+    'Join Project progress'=>'加入跟進系統',
     //沈超添加結束
 );
 ?>

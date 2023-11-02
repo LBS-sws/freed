@@ -127,7 +127,8 @@ class MenuSetController extends Controller
                 $model->saveData();
                 Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog','Record Deleted'));
             }else{
-                Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog','This record is used by some user records'));
+                $message = CHtml::errorSummary($model);
+                Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog',$message));
                 $this->redirect(Yii::app()->createUrl('menuSet/edit',array('index'=>$model->id)));
             }
         }

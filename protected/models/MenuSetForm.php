@@ -134,10 +134,10 @@ class MenuSetForm extends CFormModel
 
     //刪除验证
 	public function validateDel($attribute, $params){
-        $row = Yii::app()->db->createCommand()->select()->from("fed_markedly")
+        $row = Yii::app()->db->createCommand()->select("project_code")->from("fed_project")
             ->where('menu_id=:id', array(':id'=>$this->id))->queryRow();
         if ($row){
-            $message = "该菜单项目已有跟进，无法删除";
+            $message = "该菜单项目已有跟进，无法删除。({$row["project_code"]})";
             $this->addError($attribute,$message);
             return false;
         }
@@ -198,20 +198,26 @@ class MenuSetForm extends CFormModel
         $suffix = Yii::app()->params['envSuffix'];
         $systemId = Yii::app()->params['systemId'];
         $updateUsername=array();
-        $access=$this->menu_code."01";
-        foreach ($this->join_user as $username){
-            $row = Yii::app()->db->createCommand()->select("a.username")
-                ->from("security{$suffix}.sec_user_access a")
-                ->where("a.username='{$username}' and a.system_id='{$systemId}' and (a.a_read_only like '%{$access}%' or a.a_read_write like '%{$access}%')")
-                ->queryRow();
-            if(!$row){
-                $updateUsername[]=$username;
+        if(in_array($this->getScenario(),array("new","edit"))){
+            $access=$this->menu_code."01";
+            foreach ($this->join_user as $username){
+                $row = Yii::app()->db->createCommand()->select("a.username")
+                    ->from("security{$suffix}.sec_user_access a")
+                    ->where("a.username='{$username}' and a.system_id='{$systemId}' and (a.a_read_only like '%{$access}%' or a.a_read_write like '%{$access}%')")
+                    ->queryRow();
+                if(!$row){
+                    $updateUsername[]=$username;
+                }
+            }
+
+            if(!empty($updateUsername)){
+                $updateUsername = implode("','",$updateUsername);
+                $connection->createCommand("update security{$suffix}.sec_user_access set a_read_write=CONCAT(a_read_write,'{$access}') WHERE system_id='{$systemId}' and username in ('{$updateUsername}')")->execute();
             }
         }
 
-        if(!empty($updateUsername)){
-            $updateUsername = implode("','",$updateUsername);
-            $connection->createCommand("update security{$suffix}.sec_user_access set a_read_write=CONCAT(a_read_write,'{$access}') WHERE system_id='{$systemId}' and username in ('{$updateUsername}')")->execute();
+        if ($this->scenario=='new'){
+            $this->setScenario("edit");
         }
     }
 
@@ -335,8 +341,8 @@ class MenuSetForm extends CFormModel
 
         if ($this->scenario=='new'){
             $this->id = Yii::app()->db->getLastInsertID();
-            $this->setScenario("edit");
         }
+
         $this->saveMenuFile();
         return true;
 	}
