@@ -42,7 +42,7 @@ return array(
     'new and compute' => '新增及完成郵件',
     'only compute' => '僅完成郵件',
 
-    'assign user' => '跟進賬號',
+    'assign user' => '跟進人員',
     'No Progress' => '沒有進展',
     'In Progress' => '進展中',
     'Completed' => '已完成',
@@ -108,5 +108,7 @@ return array(
     'project total'=>'項目總數量',
     'finish total'=>'已完成數量',
     'unfinished total'=>'未完成數量',
+    'Search OK'=>'確定',
+    'look'=>'查看',
 );
 ?>

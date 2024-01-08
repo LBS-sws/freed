@@ -38,6 +38,20 @@ $this->pageTitle=Yii::app()->name . ' - projectManage';
 <section class="content">
     <div class="box">
         <div class="box-body">
+            <?php
+            if (Yii::app()->user->validRWFunction($this->function_id)){
+                echo TbHtml::button('<span class="fa fa-file-o"></span> '.Yii::t('misc','Add'), array(
+                    'submit'=>Yii::app()->createUrl('projectManage/Add',array("index"=>$model->menu_id)),
+                ));
+            }
+            ?>
+            <?php
+            echo TbHtml::button('<span class="fa fa-search"></span> '.Yii::t('misc','Search'), array(
+                    'id'=>'show_search')
+            );
+            ?>
+        </div>
+        <div class="box-body" id="search_div" style="display: none">
             <div class="form-group">
                 <?php echo $form->labelEx($model,'project_type',array('class'=>"col-lg-2 control-label")); ?>
                 <div class="col-lg-2">
@@ -88,7 +102,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage';
             <div class="form-group">
                 <div class="col-lg-12 text-center">
                 <?php
-                echo TbHtml::button('<span class="fa fa-search"></span> '.Yii::t('misc','Search'), array(
+                echo TbHtml::button('<span class="fa fa-search"></span> '.Yii::t('freed','Search OK'), array(
                     'class'=>'clickSubmit')
                 );
                 ?>
@@ -98,11 +112,6 @@ $this->pageTitle=Yii::app()->name . ' - projectManage';
     </div>
     <?php
     $search_add_html="";
-    if (Yii::app()->user->validRWFunction($this->function_id)){
-        $search_add_html = TbHtml::button('<span class="fa fa-file-o"></span> '.Yii::t('misc','Add'), array(
-            'submit'=>Yii::app()->createUrl('projectManage/Add',array("index"=>$model->menu_id)),
-        ));
-    }
    $this->widget('ext.layout.ListPageWidget', array(
         'title'=>Yii::t('freed','project list'),
         'model'=>$model,
@@ -133,6 +142,14 @@ function submitMyForm(){
 }
 
 $('.clickSubmit').on('click',submitMyForm);
+
+$('#show_search').click(function(){
+    if($('#search_div').css('display')=='none'){
+        $('#search_div').slideDown(100);
+    }else{
+        $('#search_div').slideUp(100);
+    }
+});
 ";
 Yii::app()->clientScript->registerScript('calcFunction',$js,CClientScript::POS_READY);
 $js = Script::genDatePicker(array(

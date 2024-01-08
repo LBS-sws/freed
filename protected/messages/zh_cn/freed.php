@@ -42,7 +42,7 @@ return array(
     'new and compute' => '新增及完成邮件',
     'only compute' => '仅完成邮件',
 
-    'assign user' => '跟进账号',
+    'assign user' => '跟进人员',
     'No Progress' => '没有进展',
     'In Progress' => '进展中',
     'Completed' => '已完成',
@@ -108,5 +108,7 @@ return array(
     'project total'=>'项目总数量',
     'finish total'=>'已完成数量',
     'unfinished total'=>'未完成数量',
+    'Search OK'=>'确定',
+    'look'=>'查看',
 );
 ?>

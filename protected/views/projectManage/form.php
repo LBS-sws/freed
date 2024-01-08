@@ -111,10 +111,19 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
             </div>
             <div class="form-group">
                 <?php echo $form->labelEx($model,'emailList',array('class'=>"col-lg-2 control-label")); ?>
-                <div class="col-lg-6">
-                    <?php
-                    echo ProjectManageModel::emailTable($model->menu_id,$model->emailList);
-                    ?>
+                <div class="col-lg-6" >
+                    <div>
+                        <?php
+                        echo TbHtml::button('<span class="fa fa-search"></span> '.Yii::t('freed','look'), array(
+                                'id'=>'show_email')
+                        );
+                        ?>
+                    </div>
+                    <div id="email_div" style="display: none;">
+                        <?php
+                        echo ProjectManageModel::emailTable($model->menu_id,$model->emailList);
+                        ?>
+                    </div>
                 </div>
             </div>
 		</div>
@@ -134,6 +143,14 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 <?php
 Script::genFileUpload($model,$form->id,'PROM');
 $js="
+$('#show_email').click(function(){
+    if($('#email_div').css('display')=='none'){
+        $('#email_div').slideDown(100);
+    }else{
+        $('#email_div').slideUp(100);
+    }
+});
+
 $('.td_end').click(function(e){
     if($(this).find('.fa').length>0){
         var id=$(this).data('id');
