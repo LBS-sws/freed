@@ -100,6 +100,15 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 				); ?>
 				</div>
 			</div>
+			<div class="form-group">
+				<?php echo $form->labelEx($model,'plan_date',array('class'=>"col-lg-2 control-label")); ?>
+				<div class="col-lg-3">
+				<?php
+                echo $form->textField($model, 'plan_date',
+					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
+				); ?>
+				</div>
+			</div>
             <div class="form-group">
                 <?php echo $form->labelEx($model,'project_text',array('class'=>"col-lg-2 control-label")); ?>
                 <div class="col-lg-9">
@@ -257,14 +266,14 @@ Yii::app()->clientScript->registerScript('calcFunction',$js,CClientScript::POS_R
 $js = Script::genDeleteData(Yii::app()->createUrl('projectManage/delete'));
 Yii::app()->clientScript->registerScript('deleteRecord',$js,CClientScript::POS_READY);
 
-/*
+
 if ($model->scenario!='view') {
     $js = Script::genDatePicker(array(
-        'StudyArticleModel_study_date',
+        'plan_date',
     ));
     Yii::app()->clientScript->registerScript('datePick',$js,CClientScript::POS_READY);
 }
-*/
+
 $js = Script::genReadonlyField();
 Yii::app()->clientScript->registerScript('readonlyClass',$js,CClientScript::POS_READY);
 /*

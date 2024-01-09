@@ -110,5 +110,6 @@ return array(
     'unfinished total'=>'未完成数量',
     'Search OK'=>'确定',
     'look'=>'查看',
+    'plan date'=>'计划完成日期',
 );
 ?>

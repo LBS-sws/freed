@@ -17,6 +17,7 @@ class ProjectManageModel extends CFormModel
     public $assign_user;
     public $start_date;
     public $end_date;
+    public $plan_date;
     public $lcu;
     public $luu;
     public $lcd;
@@ -61,6 +62,7 @@ class ProjectManageModel extends CFormModel
             'lcd'=>Yii::t('freed','File date'),
             'assign_user'=>Yii::t('freed','assign user'),
             'emailList'=>Yii::t('freed','email hint'),
+            'plan_date'=>Yii::t('freed','plan date'),
         );
     }
 
@@ -70,7 +72,7 @@ class ProjectManageModel extends CFormModel
     public function rules()
     {
         return array(
-            array('id,menu_id,project_code,project_name,project_type,project_text,emailList,
+            array('id,menu_id,plan_date,project_code,project_name,project_type,project_text,emailList,
             project_status,assign_plan,current_user,assign_user,start_date,end_date,lcu,luu,lcd,lud','safe'),
             array('menu_id,project_name,project_type,project_text,assign_user','required'),
             array('menu_id','validateMenuID'),
@@ -180,6 +182,7 @@ class ProjectManageModel extends CFormModel
             $this->assign_user = $row["assign_user"];
             $this->start_date = $row["start_date"];
             $this->end_date = $row["end_date"];
+            $this->plan_date = empty($row["plan_date"])?null:CGeneral::toDate($row["plan_date"]);
             $this->lcu = $row["lcu"];
             $this->luu = $row["luu"];
             $this->lcd = $row["lcd"];
@@ -260,7 +263,7 @@ class ProjectManageModel extends CFormModel
     }
 
     private function updateStrList(){
-        return array("project_type","project_name","assign_user");
+        return array("project_type","project_name","assign_user","plan_date");
     }
 
     private function updateStrValue($itemStr,$value){
@@ -321,6 +324,7 @@ class ProjectManageModel extends CFormModel
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
                     'assign_user'=>$this->assign_user,
+                    'plan_date'=>empty($this->plan_date)?null:$this->plan_date,
                     'start_date'=>$this->lcd,
                     'current_user'=>$this->lcu,
                     'lcu'=>$this->lcu,
@@ -337,6 +341,7 @@ class ProjectManageModel extends CFormModel
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
                     'assign_user'=>$this->assign_user,
+                    'plan_date'=>empty($this->plan_date)?null:$this->plan_date,
                     'luu'=>$uid,
                 ), "id={$this->id}");
                 break;

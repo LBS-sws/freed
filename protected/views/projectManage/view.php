@@ -120,6 +120,15 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                 </div>
             </div>
             <div class="form-group">
+                <?php echo $form->labelEx($model,'plan_date',array('class'=>"col-lg-2 control-label")); ?>
+                <div class="col-lg-3">
+                    <?php
+                    echo $form->textField($model, 'plan_date',
+                        array('readonly'=>true,'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
+                    ); ?>
+                </div>
+            </div>
+            <div class="form-group">
                 <?php echo $form->labelEx($model,'project_text',array('class'=>"col-lg-2 control-label")); ?>
             </div>
             <div class="box">

@@ -176,7 +176,7 @@ class FunctionList
 
     public static function getMenuCodeForMin($menu_code){
         if(strlen($menu_code)>=2){
-            return substr($menu_code,0,2);
+            return substr($menu_code,0,-2);
         }
         return $menu_code;
     }

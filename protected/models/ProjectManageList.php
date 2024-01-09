@@ -35,6 +35,7 @@ class ProjectManageList extends CListPageModel
             'lcu'=>Yii::t('freed','File builder'),
             'lcd'=>Yii::t('freed','File date'),
             'assign_user'=>Yii::t('freed','assign user'),
+            'plan_date'=>Yii::t('freed','plan date'),
 		);
 	}
 
@@ -115,6 +116,7 @@ class ProjectManageList extends CListPageModel
 					'id'=>$record['id'],
 					'project_code'=>$record['project_code'],
 					'project_name'=>$record['project_name'],
+					'plan_date'=>empty($record['plan_date'])?null:General::toDate($record['plan_date']),
 					'project_type'=>FunctionList::getProjectTypeStr($record['project_type']),
 					'project_status'=>FunctionList::getProjectStatusStr($record['project_status']),
 					'assign_plan'=>FunctionList::getAssignPlanStr($record['assign_plan']),
