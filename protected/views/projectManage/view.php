@@ -354,6 +354,44 @@ $js="
 ";
 Yii::app()->clientScript->registerScript('sendFunction',$js,CClientScript::POS_READY);
 
+Yii::app()->clientScript->registerCssFile(Yii::app()->baseUrl . "/css/viewer.css");//图片阅读
+Yii::app()->clientScript->registerScriptFile(Yii::app()->baseUrl . "/js/viewer.js", CClientScript::POS_END);//图片阅读
+$js="
+    function imgViewer(){
+        if($('#viewer-ul').length>0){
+            $('#viewer-ul').remove();
+        }
+        var list = $('<ul id=\"viewer-ul\" class=\"hide\"></ul>');
+        var num=0;
+        $('.project_text img,.div-assign img').each(function(){
+            num++;
+            var title = '图片'+num;
+            var li = $('<li></li>');
+            var img = $('<img>');
+            $(this).addClass('click_viewer_img').data('num',num);
+            img.attr({ src:$(this).attr('src'),alt:title });
+            img.addClass('click_viewer_li_'+num);
+            li.html(img);
+            list.append(li);
+        });
+        $('body').append(list);
+        list.viewer({ url: 'src'});
+    }
+    imgViewer();
+    
+    $('body').on('click','.viewer-canvas',function(){
+        $('.viewer-button.viewer-close').trigger('click');
+    });
+    $('body').on('click','.viewer-canvas *',function(e){
+        e.stopPropagation();
+    });
+    $('body').on('click','.click_viewer_img',function(){
+        var num = $(this).data('num');
+        $('#viewer-ul').find('.click_viewer_li_'+num).trigger('click');
+    });
+";
+Yii::app()->clientScript->registerScript('showImgFunction',$js,CClientScript::POS_READY);
+
 $js = Script::genReadonlyField();
 Yii::app()->clientScript->registerScript('readonlyClass',$js,CClientScript::POS_READY);
 
