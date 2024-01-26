@@ -36,6 +36,7 @@ class ProjectManageList extends CListPageModel
             'lcd'=>Yii::t('freed','File date'),
             'assign_user'=>Yii::t('freed','assign user'),
             'plan_date'=>Yii::t('freed','plan date'),
+            'urgency'=>Yii::t('freed','urgency'),
 		);
 	}
 
@@ -125,6 +126,7 @@ class ProjectManageList extends CListPageModel
 					'assign_user'=>$record['assign_user_name'],
 					'detailCount'=>$detailCount,
 					'color'=>FunctionList::getTableColor($record),
+					'urgency'=>FunctionList::getUrgencyStr($record['urgency']),
 				);
 			}
 		}

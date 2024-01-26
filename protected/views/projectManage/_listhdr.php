@@ -31,6 +31,11 @@
         ?>
     </th>
     <th>
+        <?php echo TbHtml::link($this->getLabelName('urgency').$this->drawOrderArrow('a.urgency'),'#',$this->createOrderLink('projectManage-list','a.urgency'))
+        ;
+        ?>
+    </th>
+    <th>
         <?php echo TbHtml::link($this->getLabelName('assign_user').$this->drawOrderArrow('a.assign_user'),'#',$this->createOrderLink('projectManage-list','a.assign_user'))
         ;
         ?>

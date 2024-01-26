@@ -14,6 +14,7 @@ $color = $this->record['color'];
     <td><?php echo $this->record['lcu']; ?></td>
     <td><?php echo $this->record['lcd']; ?></td>
     <td><?php echo $this->record['plan_date']; ?></td>
+    <td><?php echo $this->record['urgency']; ?></td>
     <td><?php echo $this->record['assign_user']; ?></td>
     <td><?php echo $this->record['assign_plan']; ?></td>
 
