@@ -28,6 +28,9 @@ $this->pageTitle=Yii::app()->name . ' - AnalyzeProOne Form';
             'submit'=>Yii::app()->createUrl('analyzeProOne/view')));
         ?>
 	</div>
+            <div class="text-danger" style="display:inline;padding-left:10px;">
+                <span>说明:红色数字提示表示列表当前未完成项目的数量</span>
+            </div>
 	</div></div>
 
 	<div class="box box-info">

@@ -10,6 +10,14 @@ class Counter {
             $projectSql = "and ((a.lcu = '{$uid}' and a.current_user!='{$uid}')";
             $projectSql.= " or (a.assign_user = '{$uid}' and a.current_user!='{$uid}'))";
             foreach ($menuRows as $menu){
+                //该菜单所有未完成的项目
+                $count = Yii::app()->db->createCommand()->select("count(a.id)")
+                    ->from("fed_project a")
+                    ->where("a.menu_id=:menu_id and a.assign_plan!=100 ",array(":menu_id"=>$menu["id"]))
+                    ->queryScalar();
+                $arr[]=array('code'=>$menu["menu_code"]."99",'count'=>$count,'color'=>"bg-red");
+
+                //等待登录账户处理的项目
                 $count = Yii::app()->db->createCommand()->select("count(a.id)")
                     ->from("fed_project a")
                     ->where("a.menu_id=:menu_id and a.assign_plan!=100 ".$projectSql,array(":menu_id"=>$menu["id"]))

@@ -50,6 +50,9 @@ $this->pageTitle=Yii::app()->name . ' - projectManage';
                     'id'=>'show_search')
             );
             ?>
+            <div class="text-danger" style="display:inline;padding-left:10px;">
+                <span>说明:红色数字提示表示列表当前未完成项目的数量</span>
+            </div>
         </div>
         <div class="box-body" id="search_div" style="display: none">
             <div class="form-group">
