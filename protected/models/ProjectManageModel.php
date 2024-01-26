@@ -22,6 +22,7 @@ class ProjectManageModel extends CFormModel
     public $luu;
     public $lcd;
     public $lud;
+    public $urgency;
 
     public $emailList=array();
     private $updateHistory=array();
@@ -58,6 +59,7 @@ class ProjectManageModel extends CFormModel
             'project_text'=>Yii::t('freed','project description'),
             'project_status'=>Yii::t('freed','project status'),
             'assign_plan'=>Yii::t('freed','assign plan'),
+            'urgency'=>Yii::t('freed','urgency'),
             'lcu'=>Yii::t('freed','File builder'),
             'lcd'=>Yii::t('freed','File date'),
             'assign_user'=>Yii::t('freed','assign user'),
@@ -73,7 +75,7 @@ class ProjectManageModel extends CFormModel
     {
         return array(
             array('id,menu_id,plan_date,project_code,project_name,project_type,project_text,emailList,
-            project_status,assign_plan,current_user,assign_user,start_date,end_date,lcu,luu,lcd,lud','safe'),
+            project_status,assign_plan,urgency,current_user,assign_user,start_date,end_date,lcu,luu,lcd,lud','safe'),
             array('menu_id,project_name,project_type,project_text,assign_user','required'),
             array('menu_id','validateMenuID'),
             array('id','validateDelete','on'=>array("delete")),
@@ -178,6 +180,7 @@ class ProjectManageModel extends CFormModel
             $this->project_text = $row["project_text"];
             $this->project_status = $row["project_status"];
             $this->assign_plan = $row["assign_plan"];
+            $this->urgency = $row["urgency"];
             $this->current_user = $row["current_user"];
             $this->assign_user = $row["assign_user"];
             $this->start_date = $row["start_date"];
@@ -263,7 +266,7 @@ class ProjectManageModel extends CFormModel
     }
 
     private function updateStrList(){
-        return array("project_type","project_name","assign_user","plan_date");
+        return array("project_type","project_name","assign_user","plan_date","urgency");
     }
 
     private function updateStrValue($itemStr,$value){
@@ -272,6 +275,8 @@ class ProjectManageModel extends CFormModel
                 return FunctionList::getProjectTypeStr($value);
             case "assign_user":
                 return FunctionSearch::getUserDisplayName($value);
+            case "urgency":
+                return FunctionList::getUrgencyStr($value);
             default:
                 return $value;
         }
@@ -325,6 +330,7 @@ class ProjectManageModel extends CFormModel
                     'project_text'=>$this->project_text,
                     'assign_user'=>$this->assign_user,
                     'plan_date'=>empty($this->plan_date)?null:$this->plan_date,
+                    'urgency'=>empty($this->urgency)?null:$this->urgency,
                     'start_date'=>$this->lcd,
                     'current_user'=>$this->lcu,
                     'lcu'=>$this->lcu,
@@ -342,6 +348,7 @@ class ProjectManageModel extends CFormModel
                     'project_text'=>$this->project_text,
                     'assign_user'=>$this->assign_user,
                     'plan_date'=>empty($this->plan_date)?null:$this->plan_date,
+                    'urgency'=>empty($this->urgency)?null:$this->urgency,
                     'luu'=>$uid,
                 ), "id={$this->id}");
                 break;

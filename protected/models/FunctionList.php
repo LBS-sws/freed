@@ -46,6 +46,24 @@ class FunctionList
         }
     }
 
+    public static function getUrgencyList(){
+        $list = array(
+            1=>Yii::t("freed","Low"),//低
+            2=>Yii::t("freed","Medium"),//中
+            3=>Yii::t("freed","High"),//高
+        );
+        return $list;
+    }
+
+    public static function getUrgencyStr($type=""){
+        $list = self::getUrgencyList();
+        if(key_exists($type,$list)){
+            return $list[$type];
+        }else{
+            return $type;
+        }
+    }
+
     public static function getProjectTypeList($emptyBool=false)
     {
         $list=array();

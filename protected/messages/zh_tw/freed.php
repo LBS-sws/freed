@@ -111,5 +111,6 @@ return array(
     'Search OK'=>'確定',
     'look'=>'查看',
     'plan date'=>'計劃完成日期',
+    'urgency'=>'緊急程度',
 );
 ?>

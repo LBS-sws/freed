@@ -12,6 +12,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
     #assignDiv{ border-bottom: 1px solid #eee;margin-bottom: 10px;}
     #assignDiv>.form-group{ margin-bottom: 0px;padding-bottom: 5px;}
     #assignDiv>.form-group.active{ background: #eee;}
+    *.readonly{ pointer-events: none;}
 
     @media (min-width: 1200px){
         .div-assign-time{ text-align: right;padding-top: 14px;}
@@ -125,6 +126,13 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                     <?php
                     echo $form->textField($model, 'plan_date',
                         array('readonly'=>true,'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
+                    ); ?>
+                </div>
+                <?php echo $form->labelEx($model,'urgency',array('class'=>"col-lg-2 control-label")); ?>
+                <div class="col-lg-3">
+                    <?php
+                    echo $form->dropDownList($model, 'urgency',FunctionList::getUrgencyList(),
+                        array('readonly'=>(true),'autocomplete'=>'off','empty'=>'')
                     ); ?>
                 </div>
             </div>

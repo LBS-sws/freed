@@ -108,6 +108,13 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
 				); ?>
 				</div>
+				<?php echo $form->labelEx($model,'urgency',array('class'=>"col-lg-2 control-label")); ?>
+				<div class="col-lg-3">
+				<?php
+                echo $form->dropDownList($model, 'urgency',FunctionList::getUrgencyList(),
+					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','empty'=>'')
+				); ?>
+				</div>
 			</div>
             <div class="form-group">
                 <?php echo $form->labelEx($model,'project_text',array('class'=>"col-lg-2 control-label")); ?>
