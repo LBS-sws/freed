@@ -88,7 +88,7 @@ class ProjectEmailHtml
         $emailHtml.= '<div class="div-media"><div class="div-media-left"><strong>项目类别：</strong>';
         $emailHtml.= "<span>".FunctionList::getProjectTypeStr($model->project_type)."</span>";
         $emailHtml.= '</div><div class="div-media-left"><strong>跟进人：</strong>';
-        $emailHtml.= "<span>".FunctionSearch::getUserDisplayName($model->assign_user)."</span>";
+        $emailHtml.= "<span>".$model->assign_str_user."</span>";
         $emailHtml.= '</div></div>';//end media
         $emailHtml.= '<div class="div-media"><div class="div-media-left"><strong>建档时间：</strong>';
         $emailHtml.= "<span>".$model->lcd."</span>";
@@ -138,7 +138,7 @@ class ProjectEmailHtml
         $emailHtml.= '<div class="div-media"><div class="div-media-left"><strong>项目类别：</strong>';
         $emailHtml.= "<span>".FunctionList::getProjectTypeStr($model->project_type)."</span>";
         $emailHtml.= '</div><div class="div-media-left"><strong>跟进人：</strong>';
-        $emailHtml.= "<span>".FunctionSearch::getUserDisplayName($model->assign_user)."</span>";
+        $emailHtml.= "<span>".$model->assign_str_user."</span>";
         $emailHtml.= '</div></div>';//end media
         $emailHtml.= '<div class="div-media"><div class="div-media-left"><strong>建档时间：</strong>';
         $emailHtml.= "<span>".$model->lcd."</span>";

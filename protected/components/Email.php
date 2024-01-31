@@ -422,6 +422,17 @@ class Email {
         }
     }
 
+    //添加收信人(lcu）多个账号
+    public function addEmailToLcuList($lcuList){
+        if(is_array($lcuList)){
+            foreach ($lcuList as $lcu){
+                $this->addEmailToLcu($lcu);
+            }
+        }else{
+            $this->addEmailToLcu($lcuList);
+        }
+    }
+
     //删除收信人(lcu）
     public function notEmailToLcu($lcu){
         $suffix = Yii::app()->params['envSuffix'];

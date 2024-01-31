@@ -2,7 +2,7 @@
 if($this->function_id!=$model->menu_code){
     //$this->redirect(Yii::app()->createUrl('site/index'));
 }
-$this->pageTitle=Yii::app()->name . ' - projectManage Form';
+$this->pageTitle=Yii::app()->name . ' - minManage Form';
 ?>
 <style>
     .div-assign{ border-top: 1px solid #eee;}
@@ -13,33 +13,33 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
     #assignDiv>.form-group{ margin-bottom: 0px;padding-bottom: 5px;}
     #assignDiv>.form-group.active{ background: #eee;}
     *.readonly{ pointer-events: none;}
-    .show-tr { cursor: pointer;}
+
     @media (min-width: 1200px){
         .div-assign-time{ text-align: right;padding-top: 14px;}
     }
 </style>
 
 <?php $form=$this->beginWidget('TbActiveForm', array(
-'id'=>'projectManage-form',
+'id'=>'minManage-form',
 'enableClientValidation'=>true,
 'clientOptions'=>array('validateOnSubmit'=>true,),
 'layout'=>TbHtml::FORM_LAYOUT_HORIZONTAL,
 )); ?>
 
 <section class="content-header">
-    <h1><?php echo Yii::t("freed","project form");?></h1>
+    <h1><?php echo Yii::t("freed","min project form");?></h1>
 </section>
 
 <section class="content">
 	<div class="box"><div class="box-body">
 	<div class="btn-group" role="group">
 		<?php echo TbHtml::button('<span class="fa fa-reply"></span> '.Yii::t('misc','Back'), array(
-				'submit'=>Yii::app()->createUrl('projectManage/index',array("index"=>$model->menu_id))));
+				'submit'=>Yii::app()->createUrl('projectManage/view',array("index"=>$model->project_id))));
 		?>
 	</div>
             <div class="btn-group pull-right" role="group">
                 <?php echo TbHtml::button('<span class="glyphicon glyphicon-pencil"></span> '.Yii::t('freed','Update'), array(
-                    'submit'=>Yii::app()->createUrl('projectManage/edit',array("index"=>$model->id))));
+                    'submit'=>Yii::app()->createUrl('minManage/edit',array("index"=>$model->id))));
                 ?>
                 <?php if ($model->scenario!='new'): ?>
                     <?php echo TbHtml::button('<span class="fa fa-list"></span> '.Yii::t('freed','Flow Info'), array(
@@ -47,13 +47,6 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                     );
                     ?>
                 <?php endif ?>
-                <?php
-                $counter = ($model->no_of_attm['prom'] > 0) ? ' <span id="docprom" class="label label-info">'.$model->no_of_attm['prom'].'</span>' : ' <span id="docprom"></span>';
-
-                echo TbHtml::button('<span class="fa  fa-file-text-o"></span> '.Yii::t('misc','Attachment').$counter, array(
-                        'name'=>'btnFile','id'=>'btnFile','data-toggle'=>'modal','data-target'=>'#fileuploadprom',)
-                );
-                ?>
             </div>
 	</div></div>
 
@@ -62,6 +55,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 			<?php echo $form->hiddenField($model, 'scenario'); ?>
 			<?php echo $form->hiddenField($model, 'id'); ?>
 			<?php echo $form->hiddenField($model, 'menu_id'); ?>
+			<?php echo $form->hiddenField($model, 'project_id'); ?>
 
 			<div class="form-group">
 				<?php echo $form->labelEx($model,'project_type',array('class'=>"col-lg-2 control-label")); ?>
@@ -121,27 +115,18 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                 </div>
             </div>
             <div class="form-group">
-                <?php echo $form->labelEx($model,'plan_date',array('class'=>"col-lg-2 control-label")); ?>
-                <div class="col-lg-3">
-                    <?php
-                    echo $form->textField($model, 'plan_date',
-                        array('readonly'=>true,'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
-                    ); ?>
-                </div>
-                <?php echo $form->labelEx($model,'urgency',array('class'=>"col-lg-2 control-label")); ?>
-                <div class="col-lg-3">
-                    <?php
-                    echo $form->dropDownList($model, 'urgency',FunctionList::getUrgencyList(),
-                        array('readonly'=>(true),'autocomplete'=>'off','empty'=>'')
-                    ); ?>
-                </div>
-            </div>
-            <div class="form-group">
                 <?php echo $form->labelEx($model,'plan_start_date',array('class'=>"col-lg-2 control-label")); ?>
                 <div class="col-lg-3">
                     <?php
                     echo $form->textField($model, 'plan_start_date',
                         array('readonly'=>(true),'autocomplete'=>'off','id'=>'plan_start_date','prepend'=>"<span class='fa fa-calendar'></span>")
+                    ); ?>
+                </div>
+                <?php echo $form->labelEx($model,'plan_date',array('class'=>"col-lg-2 control-label")); ?>
+                <div class="col-lg-3">
+                    <?php
+                    echo $form->textField($model, 'plan_date',
+                        array('readonly'=>true,'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
                     ); ?>
                 </div>
             </div>
@@ -155,20 +140,9 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                     </div>
                 </div>
             </div>
-            <div class="box box-info">
-                <div class="box-body">
-                    <div class="col-lg-12">
-                        <div class="row">
-                            <?php
-                            echo MinManageList::printMinHtmlForTable($model->id,$model->menu_id);
-                            ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <?php
-            echo AssignPlanModel::printAssignHtml($model->id);
+            echo MinPlanModel::printAssignHtml($model->id);
             ?>
 
             <div class="form-group">
@@ -206,48 +180,11 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 		</div>
 	</div>
 </section>
-<?php $this->renderPartial('//projectManage/historylist',array("project_id"=>$model->id)); ?>
-
-<?php $this->renderPartial('//site/fileupload',array('model'=>$model,
-    'form'=>$form,
-    'doctype'=>'PROM',
-    'header'=>Yii::t('misc','Attachment'),
-    'ronly'=>($model->scenario=='view')
-));
-?>
-<?php $this->renderPartial('attr',array(
-    'model'=>$model,
-    'form'=>$form,
-    'doctype'=>'PROINFO',
-    'header'=>Yii::t('misc','Attachment'),
-    'ronly'=>(false)
-));
-?>
+<?php $this->renderPartial('//minManage/historylist',array("min_id"=>$model->id)); ?>
 
 <?php
-Script::genFileUpload($model,$form->id,'PROM');
 $js="
-$('.td_end').click(function(e){
-    if($(this).find('.fa').length>0){
-        var id=$(this).data('id');
-        var history_code=$(this).prevAll('.history_code').eq(0).text();
-        var history_date=$(this).prevAll('.history_date').eq(0).text();
-        $('#attrModel').find('.modal-title>small').remove();
-        $('#attrModel').find('.modal-title').append('<small>（'+history_code+' _ '+history_date+'）</small>');
-        
-        $.ajax({
-            type: 'get',
-            url: '".Yii::app()->createUrl('projectManage/AjaxFileTable')."',
-            data: {id:id},
-            dataType: 'json',
-            success: function(data){
-                $('#tblFileproinfo>tbody').html(data.html);
-                $('#attrModel').modal('show');
-            }
-        });
-    }
-    e.stopPropagation();
-});
+
 ";
 Yii::app()->clientScript->registerScript('attrInfoFunction',$js,CClientScript::POS_READY);
 
@@ -334,7 +271,7 @@ $('#quick').change(function(){
 ";
 Yii::app()->clientScript->registerScript('calcFunction',$js,CClientScript::POS_READY);
 
-$ajaxLink = Yii::app()->createUrl('projectManage/saveAssign');
+$ajaxLink = Yii::app()->createUrl('minManage/saveAssign');
 $js="
     $('#assignBtn').on('click',function(){
         var assignEditor = CKEDITOR.instances['assign_text'];
@@ -350,7 +287,7 @@ $js="
             url: '$ajaxLink',
             data: {
                 scenario:'new',
-                project_id:'{$model->id}',
+                min_id:'{$model->id}',
                 assign_plan:$('#assign_plan').val(),
                 assign_text:assignEditor.getData()
             },
@@ -422,52 +359,6 @@ Yii::app()->clientScript->registerScript('showImgFunction',$js,CClientScript::PO
 
 $js = Script::genReadonlyField();
 Yii::app()->clientScript->registerScript('readonlyClass',$js,CClientScript::POS_READY);
-
-$ajaxUrl = Yii::app()->createUrl('minManage/ajaxDetail',array("index"=>$model->menu_id));
-$js = <<<EOF
-$('.show-tr').on('click',function(e){
-    var span = $(this).children("span").eq(0);
-    var id = $(this).children("span").eq(0).data('id');
-    var that = $(this).parents('tr:first');
-    
-    if(span.hasClass('fa-plus-square')){
-        if($(this).data('show')==1){
-		    $('.detail_'+id).show();
-        }else{
-            $(this).data('show',1);
-            $.ajax({
-                type: 'GET',
-                url: '{$ajaxUrl}',
-                data: {
-                    'id':id,
-                },
-                dataType: 'json',
-                success: function(data) {
-                    var assignObj = $(data['html']);
-                    assignObj.find('img').each(function(){
-                        var spanObj = $('<span>[图片]</span>');
-                        spanObj.addClass('clickSpanImg');
-                        spanObj.data('src',$(this).attr('src'));
-                        $(this).before(spanObj);
-                        $(this).remove();
-                    });
-                    that.after(assignObj);
-                },
-                error: function(data) { // if error occured
-                    alert('Error occured.please try again');
-                }
-            });
-        }
-        span.removeClass('fa-plus-square').addClass('fa-minus-square');
-    }else{
-		$('.detail_'+id).hide();
-        span.removeClass('fa-minus-square').addClass('fa-plus-square');
-    }
-    e.stopPropagation();
-    return false;
-});
-EOF;
-Yii::app()->clientScript->registerScript('showClick',$js,CClientScript::POS_READY);
 
 ?>
 

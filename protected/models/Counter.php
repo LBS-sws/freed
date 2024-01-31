@@ -7,8 +7,8 @@ class Counter {
         $menuRows = Yii::app()->db->createCommand()->select("id,menu_code")
             ->from("fed_setting")->where("display=1")->queryAll();
         if($menuRows){
-            $projectSql = "and ((a.lcu = '{$uid}' and a.current_user!='{$uid}')";
-            $projectSql.= " or (a.assign_user = '{$uid}' and a.current_user!='{$uid}'))";
+            $projectSql = "and ((a.current_user!=a.lcu and a.lcu = '{$uid}')";
+            $projectSql.= " or (a.current_user=a.lcu and CONCAT(',',a.assign_user,',') like '%,{$uid},%'))";
             foreach ($menuRows as $menu){
                 //该菜单所有未完成的项目
                 $count = Yii::app()->db->createCommand()->select("count(a.id)")

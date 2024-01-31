@@ -2,11 +2,11 @@
 if($this->function_id!=$model->menu_code){
     $this->redirect(Yii::app()->createUrl('site/index'));
 }
-$this->pageTitle=Yii::app()->name . ' - projectManage Form';
+$this->pageTitle=Yii::app()->name . ' - minManage Form';
 ?>
 
 <?php $form=$this->beginWidget('TbActiveForm', array(
-'id'=>'projectManage-form',
+'id'=>'minManage-form',
 'enableClientValidation'=>true,
 'clientOptions'=>array('validateOnSubmit'=>true,),
 'layout'=>TbHtml::FORM_LAYOUT_HORIZONTAL,
@@ -16,7 +16,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 </style>
 
 <section class="content-header">
-    <h1><?php echo Yii::t("freed","project form");?></h1>
+    <h1><?php echo Yii::t("freed","min project form");?></h1>
 </section>
 
 <section class="content">
@@ -25,21 +25,21 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 		<?php 
 			if ($model->scenario!='new' && $model->scenario!='view') {
 				echo TbHtml::button('<span class="fa fa-file-o"></span> '.Yii::t('misc','Add Another'), array(
-					'submit'=>Yii::app()->createUrl('projectManage/add',array("index"=>$model->menu_id))));
+					'submit'=>Yii::app()->createUrl('minManage/add',array("index"=>$model->menu_id))));
 			}
 		?>
 		<?php
         if(empty($model->id)){
-            $backUrl = Yii::app()->createUrl('projectManage/index',array("index"=>$model->menu_id));
+            $backUrl = Yii::app()->createUrl('projectManage/view',array("index"=>$model->project_id));
         }else{
-            $backUrl = Yii::app()->createUrl('projectManage/view',array("index"=>$model->id));
+            $backUrl = Yii::app()->createUrl('minManage/view',array("index"=>$model->id));
         }
         echo TbHtml::button('<span class="fa fa-reply"></span> '.Yii::t('misc','Back'), array(
 				'submit'=>$backUrl));
 		?>
 <?php if ($model->scenario!='view'): ?>
 			<?php echo TbHtml::button('<span class="fa fa-upload"></span> '.Yii::t('misc','Save'), array(
-				'submit'=>Yii::app()->createUrl('projectManage/save')));
+				'submit'=>Yii::app()->createUrl('minManage/save')));
 			?>
 <?php endif ?>
 <?php if ($model->scenario!='new' && $model->scenario!='view'): ?>
@@ -56,13 +56,6 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                 );
                 ?>
             <?php endif ?>
-            <?php
-            $counter = ($model->no_of_attm['prom'] > 0) ? ' <span id="docprom" class="label label-info">'.$model->no_of_attm['prom'].'</span>' : ' <span id="docprom"></span>';
-
-            echo TbHtml::button('<span class="fa  fa-file-text-o"></span> '.Yii::t('misc','Attachment').$counter, array(
-                    'name'=>'btnFile','id'=>'btnFile','data-toggle'=>'modal','data-target'=>'#fileuploadprom',)
-            );
-            ?>
         </div>
 	</div></div>
 
@@ -73,6 +66,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 			<?php echo $form->hiddenField($model, 'menu_id'); ?>
 			<?php echo $form->hiddenField($model, 'lcu'); ?>
 			<?php echo $form->hiddenField($model, 'lcd'); ?>
+			<?php echo $form->hiddenField($model, 'project_id'); ?>
 			<?php echo $form->hiddenField($model, 'project_status'); ?>
 
 			<div class="form-group">
@@ -101,27 +95,18 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 				</div>
 			</div>
 			<div class="form-group">
+                <?php echo $form->labelEx($model,'plan_start_date',array('class'=>"col-lg-2 control-label")); ?>
+                <div class="col-lg-3">
+                    <?php
+                    echo $form->textField($model, 'plan_start_date',
+                        array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','id'=>'plan_start_date','prepend'=>"<span class='fa fa-calendar'></span>")
+                    ); ?>
+                </div>
 				<?php echo $form->labelEx($model,'plan_date',array('class'=>"col-lg-2 control-label")); ?>
 				<div class="col-lg-3">
 				<?php
                 echo $form->textField($model, 'plan_date',
 					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','id'=>'plan_date','prepend'=>"<span class='fa fa-calendar'></span>")
-				); ?>
-				</div>
-				<?php echo $form->labelEx($model,'urgency',array('class'=>"col-lg-2 control-label")); ?>
-				<div class="col-lg-3">
-				<?php
-                echo $form->dropDownList($model, 'urgency',FunctionList::getUrgencyList(),
-					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','empty'=>'')
-				); ?>
-				</div>
-			</div>
-			<div class="form-group">
-				<?php echo $form->labelEx($model,'plan_start_date',array('class'=>"col-lg-2 control-label")); ?>
-				<div class="col-lg-3">
-				<?php
-                echo $form->textField($model, 'plan_start_date',
-					array('readonly'=>($model->scenario=='view'),'autocomplete'=>'off','id'=>'plan_start_date','prepend'=>"<span class='fa fa-calendar'></span>")
 				); ?>
 				</div>
 			</div>
@@ -146,7 +131,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
                     </div>
                     <div id="email_div" style="display: none;">
                         <?php
-                        echo ProjectManageModel::emailTable($model->menu_id,$model->emailList);
+                        echo MinManageModel::emailTable($model->menu_id,$model->emailList);
                         ?>
                     </div>
                 </div>
@@ -156,7 +141,7 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 </section>
 
 <?php $this->renderPartial('//site/removedialog'); ?>
-<?php $this->renderPartial('//projectManage/historylist',array("project_id"=>$model->id)); ?>
+<?php $this->renderPartial('//minManage/historylist',array("min_id"=>$model->id)); ?>
 
 <?php $this->renderPartial('//site/fileupload',array('model'=>$model,
     'form'=>$form,
@@ -181,28 +166,6 @@ $('#show_email').click(function(){
     }else{
         $('#email_div').slideUp(100);
     }
-});
-
-$('.td_end').click(function(e){
-    if($(this).find('.fa').length>0){
-        var id=$(this).data('id');
-        var history_code=$(this).prevAll('.history_code').eq(0).text();
-        var history_date=$(this).prevAll('.history_date').eq(0).text();
-        $('#attrModel').find('.modal-title>small').remove();
-        $('#attrModel').find('.modal-title').append('<small>（'+history_code+' _ '+history_date+'）</small>');
-        
-        $.ajax({
-            type: 'get',
-            url: '".Yii::app()->createUrl('projectManage/AjaxFileTable')."',
-            data: {id:id},
-            dataType: 'json',
-            success: function(data){
-                $('#tblFileproinfo>tbody').html(data.html);
-                $('#attrModel').modal('show');
-            }
-        });
-    }
-    e.stopPropagation();
 });
 ";
 Yii::app()->clientScript->registerScript('attrInfoFunction',$js,CClientScript::POS_READY);
@@ -299,7 +262,7 @@ $('.changeEmailType').change(function(){
 ";
 Yii::app()->clientScript->registerScript('calcFunction',$js,CClientScript::POS_READY);
 
-$js = Script::genDeleteData(Yii::app()->createUrl('projectManage/delete'));
+$js = Script::genDeleteData(Yii::app()->createUrl('minManage/delete'));
 Yii::app()->clientScript->registerScript('deleteRecord',$js,CClientScript::POS_READY);
 
 

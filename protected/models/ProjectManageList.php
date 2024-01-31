@@ -48,6 +48,19 @@ class ProjectManageList extends CListPageModel
         );
     }
 
+    public function retrieveMenuId($menu_id){
+        $menu = Yii::app()->db->createCommand()->select("menu_name,menu_code")
+            ->from("fed_setting")
+            ->where("id =:id",array(":id"=>$menu_id))->queryRow();
+        if($menu){
+            $this->menu_id = $menu_id;
+            $this->menu_name = $menu["menu_name"];
+            $this->menu_code = $menu["menu_code"].$this->code_pre;
+            return true;
+        }
+        return false;
+    }
+
     public function retrieveAll($menu_id,$pageNum=1){
         $menu = Yii::app()->db->createCommand()->select("menu_name,menu_code")
             ->from("fed_setting")
@@ -65,10 +78,9 @@ class ProjectManageList extends CListPageModel
 	public function retrieveDataByPage($pageNum=1)
 	{
 		$suffix = Yii::app()->params['envSuffix'];
-		$sql1 = "select a.*,b.disp_name as lcu_name, f.disp_name as assign_user_name
+		$sql1 = "select a.*,b.disp_name as lcu_name 
                 from fed_project a 
                 LEFT JOIN security{$suffix}.sec_user b ON a.lcu=b.username
-                LEFT JOIN security{$suffix}.sec_user f ON a.assign_user=f.username
                 where a.menu_id={$this->menu_id}
 			";
         $sql2 = "select count(a.id) 
@@ -123,7 +135,7 @@ class ProjectManageList extends CListPageModel
 					'assign_plan'=>FunctionList::getAssignPlanStr($record['assign_plan']),
 					'lcu'=>$record['lcu_name'],
                     'lcd'=>date("Y/m/d",strtotime($record['lcd'])),
-					'assign_user'=>$record['assign_user_name'],
+					'assign_user'=>$record['assign_str_user'],
 					'detailCount'=>$detailCount,
 					'color'=>FunctionList::getTableColor($record),
 					'urgency'=>FunctionList::getUrgencyStr($record['urgency']),

@@ -103,4 +103,18 @@ class FunctionSearch{
         }
         return $disp_name;
     }
+
+    //获取账号昵称
+    public static function getUserDisplayNameForArr($arr){
+        $nameStr = "";
+        if(is_array($arr)){
+            foreach ($arr as $username){
+                $nameStr.= empty($nameStr)?"":",";
+                $nameStr.=self::getUserDisplayName($username);
+            }
+        }else{
+            $nameStr.=self::getUserDisplayName($arr);
+        }
+        return $nameStr;
+    }
 }

@@ -112,5 +112,15 @@ return array(
     'look'=>'查看',
     'plan date'=>'計劃完成日期',
     'urgency'=>'緊急程度',
+
+    'plan start date'=>'預計開始時間',
+    'min project code' => '小項目編號',
+    'min project form' => '小項目表單',
+    'min project name' => '小項目標題',
+    'min project type' => '小項目類別',
+    'min project description' => '小項目描述',
+    'min project status' => '小項目進展',
+    'min assign plan' => '小項目進度',
+    'add min project' => '增加',
 );
 ?>

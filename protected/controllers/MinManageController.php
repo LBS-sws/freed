@@ -6,7 +6,7 @@
  * Date: 2017/6/7 0008
  * Time: 上午 11:30
  */
-class ProjectManageController extends Controller
+class MinManageController extends Controller
 {
     public $function_id='TE19';
 
@@ -43,13 +43,12 @@ class ProjectManageController extends Controller
     {
         return array(
             array('allow',
-                'actions'=>array('add','save','saveAssign','delete',
-                    'uploadImgArea','fileRemove','fileupload'),
-                'expression'=>array('ProjectManageController','allowReadWrite'),
+                'actions'=>array('add','save','saveAssign','delete'),
+                'expression'=>array('MinManageController','allowReadWrite'),
             ),
             array('allow',
-                'actions'=>array('index','view','edit','ajaxDetail','fileDownload','ajaxFileTable'),
-                'expression'=>array('ProjectManageController','allowReadOnly'),
+                'actions'=>array('view','edit','ajaxDetail'),
+                'expression'=>array('MinManageController','allowReadOnly'),
             ),
             array('deny',  // deny all users
                 'users'=>array('*'),
@@ -100,10 +99,10 @@ class ProjectManageController extends Controller
     //详情列表的異步請求
     public function actionAjaxDetail($index){
         if(Yii::app()->request->isAjaxRequest) {//是否ajax请求
-            $project_id = key_exists("id",$_GET)?$_GET["id"]:0;
-            $model = new ProjectManageList();
+            $min_id = key_exists("id",$_GET)?$_GET["id"]:0;
+            $model = new MinManageList();
             if($model->retrieveMenuId($index)&&$this->validateMenuCode($model->menu_code)){//验证菜单栏
-                $html =$model->getProjectInfoHtmlTr($project_id);
+                $html =$model->getMinInfoHtmlTr($min_id);
             }else{
                 $html ="";
             }
@@ -113,36 +112,15 @@ class ProjectManageController extends Controller
         }
     }
 
-    public function actionIndex($index,$pageNum=0){
-        $model = new ProjectManageList;
-        if (isset($_POST['ProjectManageList'])) {
-            $model->attributes = $_POST['ProjectManageList'];
-        } else {
-            $session = Yii::app()->session;
-            if (isset($session['projectManage_'.$this->function_id]) && !empty($session['projectManage_'.$this->function_id])) {
-                $criteria = $session['projectManage_'.$this->function_id];
-                $model->setCriteria($criteria);
-            }
-        }
-        $model->determinePageNum($pageNum);
-        $model->retrieveAll($index,$model->pageNum);
-        if($this->validateMenuCode($model->menu_code)){
-            $this->render('index',array('model'=>$model));
-        }else{
-            throw new CHttpException(404,'The requested page does not exist.');
-        }
-    }
-
-
     public function actionSave()
     {
-        if (isset($_POST['ProjectManageModel'])) {
-            $model = new ProjectManageModel($_POST['ProjectManageModel']['scenario']);
-            $model->attributes = $_POST['ProjectManageModel'];
+        if (isset($_POST['MinManageModel'])) {
+            $model = new MinManageModel($_POST['MinManageModel']['scenario']);
+            $model->attributes = $_POST['MinManageModel'];
             if ($model->validate()&&$this->validateMenuCode($model->menu_code)) {
                 $model->saveData();
                 Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog','Save Done'));
-                $this->redirect(Yii::app()->createUrl('ProjectManage/edit',array('index'=>$model->id)));
+                $this->redirect(Yii::app()->createUrl('MinManage/edit',array('index'=>$model->id)));
             } else {
                 $message = CHtml::errorSummary($model);
                 Dialog::message(Yii::t('dialog','Validation Message'), $message);
@@ -151,10 +129,11 @@ class ProjectManageController extends Controller
         }
     }
 
-    public function actionAdd($index)
+    public function actionAdd($index,$project_id)
     {
-        $model = new ProjectManageModel('new');
-        if ($model->retrieveMenuData($index)&&$this->validateMenuCode($model->menu_code)) {
+        $model = new MinManageModel('new');
+        $bool = $model->resetDataForAdd($project_id);
+        if ($bool&&$model->retrieveMenuData($index)&&$this->validateMenuCode($model->menu_code)) {
             $this->render('form',array('model'=>$model,));
         } else {
             throw new CHttpException(404,'The requested page does not exist.');
@@ -163,9 +142,9 @@ class ProjectManageController extends Controller
 
     public function actionEdit($index)
     {
-        $model = new ProjectManageModel('edit');
+        $model = new MinManageModel('edit');
         if ($model->retrieveData($index)&&$this->validateMenuCode($model->menu_code)) {
-            $model->getProjectEmailInfo();
+            $model->getMinEmailInfo();
             $this->render('form',array('model'=>$model,));
         } else {
             throw new CHttpException(404,'The requested page does not exist.');
@@ -174,7 +153,7 @@ class ProjectManageController extends Controller
 
     public function actionView($index)
     {
-        $model = new ProjectManageModel('edit');
+        $model = new MinManageModel('edit');
         $assignModel = new AssignPlanModel('edit');
         if ($model->retrieveData($index)&&$this->validateMenuCode($model->menu_code)) {
             $this->render('view',array('model'=>$model,'assignModel'=>$assignModel,));
@@ -185,13 +164,13 @@ class ProjectManageController extends Controller
 
     public function actionDelete()
     {
-        $model = new ProjectManageModel('delete');
-        if (isset($_POST['ProjectManageModel'])) {
-            $model->attributes = $_POST['ProjectManageModel'];
+        $model = new MinManageModel('delete');
+        if (isset($_POST['MinManageModel'])) {
+            $model->attributes = $_POST['MinManageModel'];
             if ($model->validate()&&$this->validateMenuCode($model->menu_code)) {
                 $model->saveData();
                 Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog','Record Deleted'));
-                $this->redirect(Yii::app()->createUrl('ProjectManage/index',array("index"=>$model->menu_id)));
+                $this->redirect(Yii::app()->createUrl('MinManage/index',array("index"=>$model->menu_id)));
             } else {
                 $message = CHtml::errorSummary($model);
                 Dialog::message(Yii::t('dialog','Validation Message'), $message);
@@ -200,31 +179,10 @@ class ProjectManageController extends Controller
         }
     }
 
-    //上傳圖片(富文本)
-    public function actionUploadImgArea(){
-        $img = CUploadedFile::getInstanceByName("upload");
-        $path =Yii::app()->basePath."/../images/uploadArea/";
-        $city = Yii::app()->user->city();
-        if (!file_exists($path)){
-            mkdir($path);
-            $myfile = fopen($path."index.php", "w");
-            fclose($myfile);
-        }
-        $url = "images/uploadArea/{$city}_".date("YmdHis").".".$img->getExtensionName();
-        if ($img->getError()==0) {
-            $img->saveAs($url);
-            $url = Yii::app()->getBaseUrl(true)."/".$url;
-            echo CJSON::encode(array('uploaded'=>1,'url'=>$url,'fileName'=>$img->getName()));
-        }else{
-            echo CJSON::encode(array('uploaded'=>1,'url'=>"",'fileName'=>$img->getName(),'error'=>array("message"=>"图片大小不能超过2M")));
-        }
-        die();
-    }
-
     public function actionSaveAssign(){
         if(Yii::app()->request->isAjaxRequest) {//是否ajax请求
             $scenario = key_exists("scenario",$_POST)?$_POST['scenario']:"";
-            $model = new AssignPlanModel($scenario);
+            $model = new MinPlanModel($scenario);
             $model->attributes = $_POST;
             if($model->validate()&&$this->validateMenuCode($model->menu_code)){
                 $model->saveData();
@@ -239,62 +197,6 @@ class ProjectManageController extends Controller
             die();
         }else{
             $this->redirect(Yii::app()->createUrl(''));
-        }
-    }
-
-    public function actionAjaxFileTable($id=0) {
-        if(Yii::app()->request->isAjaxRequest) {//是否ajax请求
-            $model = new ProjectManageModel();
-            $html = $model->getAjaxFileTable($id);
-            echo CJSON::encode(array("status"=>1,"html"=>$html));
-        }else{
-            $this->redirect(Yii::app()->createUrl('site/index'));
-        }
-    }
-
-    public function actionFileupload($doctype) {
-        $model = new ProjectManageModel();
-        if (isset($_POST['ProjectManageModel'])) {
-            $model->attributes = $_POST['ProjectManageModel'];
-            $id = ($_POST['ProjectManageModel']['scenario']=='new') ? 0 : $model->id;
-            $docman = new DocMan($model->docType,$id,get_class($model));
-            $docman->masterId = $model->docMasterId[strtolower($doctype)];
-            if (isset($_FILES[$docman->inputName])) $docman->files = $_FILES[$docman->inputName];
-            $docman->fileUpload();
-            echo $docman->genTableFileList(false);
-        } else {
-            echo "NIL";
-        }
-    }
-
-    public function actionFileRemove($doctype) {
-        $model = new ProjectManageModel();
-        if (isset($_POST['ProjectManageModel'])) {
-            $model->attributes = $_POST['ProjectManageModel'];
-            $docman = new DocMan($model->docType,$model->id,'ProjectManageModel');
-            $docman->masterId = $model->docMasterId[strtolower($doctype)];
-            $docman->fileRemove($model->removeFileId[strtolower($doctype)]);
-            echo $docman->genTableFileList(false);
-        } else {
-            echo "NIL";
-        }
-    }
-
-    public function actionFileDownload($mastId, $docId, $fileId, $doctype) {
-        $sql = "select city_allow,apply_lcu from fed_project where id = $docId";
-        $row = Yii::app()->db->createCommand($sql)->queryRow();
-        if ($row!==false) {
-            $citylist = Yii::app()->user->city_allow();
-            $uid = Yii::app()->user->id;
-            if (strpos($citylist, $row['city_allow']) !== false||$row["apply_lcu"]==$uid) {
-                $docman = new DocMan($doctype,$docId,'ProjectManageModel');
-                $docman->masterId = $mastId;
-                $docman->fileDownload($fileId);
-            } else {
-                throw new CHttpException(404,'Access right not match.');
-            }
-        } else {
-            throw new CHttpException(404,'Record not found.');
         }
     }
 }

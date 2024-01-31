@@ -182,11 +182,17 @@ class FunctionList
             $trClass.=" text-muted";
         }else{
             $uid = Yii::app()->user->id;
-            if($row["current_user"]!=$uid){
-                if($row["assign_user"]==$uid||$row["lcu"]==$uid){
+            if($row["current_user"]!=$row["lcu"]){ //如果建档人和当前跟进人不一致
+                if($row["lcu"]==$uid){ //如果建档人是登录人，则需要登录人处理
+                    $trClass.=" bg-yellow";
+                }
+            }else{//如果建档人和当前跟进人一致
+                $str = ",{$row["assign_user"]},";
+                if(strpos($str,",{$uid},")!==false){ //跟进人员包含登录人，则需要登录人处理
                     $trClass.=" bg-yellow";
                 }
             }
+
             $trClass.=" text-primary";
         }
         return $trClass;

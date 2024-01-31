@@ -1,51 +1,9 @@
 <?php
 
-class ProjectManageModel extends CFormModel
+class MinManageModel extends ProjectManageModel
 {
-    public $id;
-    public $menu_id;
-    public $menu_name;
-    public $menu_code;
+    public $project_id;
 
-    public $project_code;
-    public $project_name;
-    public $project_type;
-    public $project_text;
-    public $project_status;
-    public $assign_plan;
-    public $current_user;
-    public $assign_user=array();
-    public $assign_str_user;
-    public $start_date;
-    public $end_date;
-    public $plan_date;
-    public $plan_start_date;
-    public $lcu;
-    public $luu;
-    public $lcd;
-    public $lud;
-    public $urgency;
-
-    public $emailList=array();
-    protected $updateHistory=array();
-    protected $preRow=array();
-
-    protected $code_pre="01";
-
-    public $no_of_attm = array(
-        'prom'=>0,
-        'proinfo'=>0
-    );
-    public $docType = 'PROM';
-    public $docMasterId = array(
-        'prom'=>0,
-        'proinfo'=>0
-    );
-    public $files;
-    public $removeFileId = array(
-        'prom'=>0,
-        'proinfo'=>0
-    );
     /**
      * Declares customized attribute labels.
      * If not declared here, an attribute would have a label that is
@@ -55,9 +13,9 @@ class ProjectManageModel extends CFormModel
     {
         return array(
             'id'=>Yii::t('freed','ID'),
-            'project_code'=>Yii::t('freed','project code'),
-            'project_name'=>Yii::t('freed','project name'),
-            'project_type'=>Yii::t('freed','project type'),
+            'project_code'=>Yii::t('freed','min project code'),
+            'project_name'=>Yii::t('freed','min project name'),
+            'project_type'=>Yii::t('freed','min project type'),
             'project_text'=>Yii::t('freed','project description'),
             'project_status'=>Yii::t('freed','project status'),
             'assign_plan'=>Yii::t('freed','assign plan'),
@@ -77,11 +35,12 @@ class ProjectManageModel extends CFormModel
     public function rules()
     {
         return array(
-            array('id,menu_id,plan_date,plan_start_date,project_code,project_name,project_type,project_text,emailList,
+            array('id,menu_id,project_id,plan_date,plan_start_date,project_code,project_name,project_type,project_text,emailList,
             project_status,assign_plan,urgency,current_user,assign_user,start_date,end_date,lcu,luu,lcd,lud','safe'),
             array('menu_id,project_name,project_type,project_text,assign_user','required'),
             array('menu_id','validateMenuID'),
             array('id','validateDelete','on'=>array("delete")),
+            array('project_id','validateProjectId','on'=>array("edit","new","delete")),
             array('project_name','validateName','on'=>array("edit","new")),
             array('emailList','validateEmailList','on'=>array("edit","new")),
 
@@ -90,31 +49,20 @@ class ProjectManageModel extends CFormModel
     }
 
     public function validateDelete($attribute, $params){
-        $row = Yii::app()->db->createCommand()->select("id")->from("fed_project_assign")
-            ->where('project_id=:id',array(':id'=>$this->id))->queryRow();
+        $row = Yii::app()->db->createCommand()->select("id")->from("fed_min_assign")
+            ->where('min_id=:id',array(':id'=>$this->id))->queryRow();
         if($row){
             $message = "该项目已有跟进内容，无法删除";
             $this->addError($attribute,$message);
         }
-        $row = Yii::app()->db->createCommand()->select("id")->from("fed_min")
-            ->where('project_id=:id',array(':id'=>$this->id))->queryRow();
-        if($row){
-            $message = "该项目包含小项目，请先删除小项目";
-            $this->addError($attribute,$message);
-        }
     }
 
-    public function validateMenuID($attribute, $params){
-        $row = Yii::app()->db->createCommand()
-            ->select("menu_code,menu_name")
-            ->from("fed_setting")
-            ->where('id=:id',array(':id'=>$this->menu_id))->queryRow();
+    public function validateProjectId($attribute, $params){
+        $row = Yii::app()->db->createCommand()->select("id")->from("fed_project")
+            ->where('id=:id',array(':id'=>$this->project_id))->queryRow();
         if(!$row){
-            $message = "数据异常请刷新重试";
+            $message = "大项目不存在，请刷新页面重试";
             $this->addError($attribute,$message);
-        }else{
-            $this->menu_name = $row["menu_name"];
-            $this->menu_code = $row["menu_code"].$this->code_pre;
         }
     }
 
@@ -123,49 +71,26 @@ class ProjectManageModel extends CFormModel
         if(!empty($this->id)){
             $id = $this->id;
         }
-        $row = Yii::app()->db->createCommand()->select("project_code")->from("fed_project")
-            ->where('project_name=:name and id!=:id and menu_id=:menu_id',
-                array(':name'=>$this->project_name,':id'=>$id,':menu_id'=>$this->menu_id))->queryRow();
+        $row = Yii::app()->db->createCommand()->select("project_code")->from("fed_min")
+            ->where('project_name=:name and id!=:id and project_id=:project_id',
+                array(':name'=>$this->project_name,':id'=>$id,':project_id'=>$this->project_id))->queryRow();
         if($row){
             $message = "已存在相同的项目标题（{$row["project_code"]}），请重新命名";
             $this->addError($attribute,$message);
         }
     }
 
-    public function validateEmailList($attribute, $params){
-        $list = array();
-        $rows = FunctionSearch::getMenuUserEmailList($this->menu_id);
-        $emailList = key_exists("emailList",$_POST)?$_POST["emailList"]:array();
-        foreach ($rows as $row){
-            $username = $row["username"];
-            if(key_exists($username,$emailList)&&$emailList[$username]["uflag"]=="Y"){
-                $list[$username]=array(
-                    "username"=>$username,
-                    "emailType"=>$emailList[$username]["emailType"],
-                    "uflag"=>$emailList[$username]["uflag"],
-                    "id"=>$emailList[$username]["id"],
-                );
-            }
-            if(Yii::app()->user->id==$username){
-                $list[$username]=array(
-                    "id"=>0,
-                    "username"=>$username,
-                    "emailType"=>1,
-                    "uflag"=>"Y",
-                );
-            }
-        }
-        $this->emailList = $list;
-    }
-
-    public function retrieveMenuData($menu_id){ //新增
-        $menu = Yii::app()->db->createCommand()->select("*")
-            ->from("fed_setting")
-            ->where("id =:id",array(":id"=>$menu_id))->queryRow();
-        if($menu){
-            $this->menu_id = $menu_id;
-            $this->menu_name = $menu["menu_name"];
-            $this->menu_code = $menu["menu_code"].$this->code_pre;
+    public function resetDataForAdd($project_id){ //新增
+        $row = Yii::app()->db->createCommand()->select("a.*")
+            ->from("fed_project a")
+            ->where("a.id =:id",array(":id"=>$project_id))->queryRow();
+        if($row){
+            $this->project_id = $project_id;
+            $this->assign_user = explode(",",$row["assign_user"]);
+            $this->assign_str_user = $row["assign_str_user"];
+            $this->id = $project_id;//强制调用主项目的邮件通知
+            $this->getProjectEmailInfo();
+            $this->id = null;//还原
             return true;
         }
         return false;
@@ -173,8 +98,8 @@ class ProjectManageModel extends CFormModel
 
     public function retrieveData($index){ //修改
         $suffix = Yii::app()->params['envSuffix'];
-        $row = Yii::app()->db->createCommand()->select("a.*,b.menu_name,b.menu_code,docman$suffix.countdoc('PROM',a.id) as promdoc ")
-            ->from("fed_project a")
+        $row = Yii::app()->db->createCommand()->select("a.*,b.menu_name,b.menu_code")
+            ->from("fed_min a")
             ->leftJoin("fed_setting b","a.menu_id=b.id")
             ->where("a.id =:id",array(":id"=>$index))->queryRow();
         if($row){
@@ -183,6 +108,7 @@ class ProjectManageModel extends CFormModel
             $this->menu_name = $row["menu_name"];
             $this->menu_code = $row["menu_code"].$this->code_pre;
 
+            $this->project_id = $row["project_id"];
             $this->project_code = $row["project_code"];
             $this->project_name = $row["project_name"];
             $this->project_type = $row["project_type"];
@@ -201,22 +127,21 @@ class ProjectManageModel extends CFormModel
             $this->luu = $row["luu"];
             $this->lcd = $row["lcd"];
             $this->lud = $row["lud"];
-            $this->no_of_attm["prom"] = $row['promdoc'];
             return true;
         }
         return false;
     }
 
-    public static function getProjectHistoryRows($project_id){
-        $rows = Yii::app()->db->createCommand()->select("*")->from("fed_project_history")
-            ->where("project_id =:id",array(":id"=>$project_id))->order("id desc")->queryAll();
+    public static function getMinHistoryRows($min_id){
+        $rows = Yii::app()->db->createCommand()->select("*")->from("fed_min_history")
+            ->where("min_id =:id",array(":id"=>$min_id))->order("id desc")->queryAll();
         return $rows;
     }
 
-    public function getProjectEmailInfo(){
+    public function getMinEmailInfo(){
         $rows = Yii::app()->db->createCommand()->select("id,username,email_type")
-            ->from("fed_project_email")
-            ->where("project_id =:id",array(":id"=>$this->id))->queryAll();
+            ->from("fed_min_email")
+            ->where("min_id =:id",array(":id"=>$this->id))->queryAll();
         $this->emailList=array();
         if($rows){
             foreach ($rows as $row){
@@ -266,9 +191,9 @@ class ProjectManageModel extends CFormModel
         return $html;
     }
 
-    public static function getProjectRow($project_id){
-        $row = Yii::app()->db->createCommand()->select("*")->from("fed_project")
-            ->where("id =:id",array(":id"=>$project_id))->queryRow();
+    public static function getMinRow($min_id){
+        $row = Yii::app()->db->createCommand()->select("*")->from("fed_min")
+            ->where("id =:id",array(":id"=>$min_id))->queryRow();
         return $row;
     }
 
@@ -299,16 +224,16 @@ class ProjectManageModel extends CFormModel
             $uid = Yii::app()->user->id;
             $userSql = implode("','",$this->assign_user);
             //删除多余的跟进人员
-            Yii::app()->db->createCommand()->delete('fed_project_user', "project_id=:id and username not in('{$userSql}')", array(':id'=>$this->id));
+            Yii::app()->db->createCommand()->delete('fed_min_user', "min_id=:id and username not in('{$userSql}')", array(':id'=>$this->id));
 
             //添加新的跟进人员
-            $rows = Yii::app()->db->createCommand()->select("id,username")->from("fed_project_user")
-                ->where("project_id =:id",array(":id"=>$this->id))->queryAll();
+            $rows = Yii::app()->db->createCommand()->select("id,username")->from("fed_min_user")
+                ->where("min_id =:id",array(":id"=>$this->id))->queryAll();
             $rows = $rows?array_column($rows,"username"):array();
             foreach ($this->assign_user as $user){
                 if(!in_array($user,$rows)){
-                    Yii::app()->db->createCommand()->insert("fed_project_user", array(
-                        'project_id'=>$this->id,
+                    Yii::app()->db->createCommand()->insert("fed_min_user", array(
+                        'min_id'=>$this->id,
                         'username'=>$user,
                         'lcu'=>$uid,
                     ));
@@ -321,8 +246,8 @@ class ProjectManageModel extends CFormModel
         $uid = Yii::app()->user->id;
         switch ($this->getScenario()){
             case "new":
-                Yii::app()->db->createCommand()->insert("fed_project_history", array(
-                    'project_id'=>$this->id,
+                Yii::app()->db->createCommand()->insert("fed_min_history", array(
+                    'min_id'=>$this->id,
                     'update_type'=>2,
                     'update_html'=>"新增",
                     'lcu'=>$uid,
@@ -330,7 +255,7 @@ class ProjectManageModel extends CFormModel
                 break;
             case "edit":
                 $preRow = $this->preRow;
-                $nowRow = self::getProjectRow($this->id);
+                $nowRow = self::getMinRow($this->id);
                 foreach ($this->updateStrList() as $item){
                     if(key_exists($item,$preRow)&&$nowRow[$item]!==$preRow[$item]){
                         $labelName = $this->getAttributeLabel($item);
@@ -338,8 +263,8 @@ class ProjectManageModel extends CFormModel
                     }
                 }
                 if(!empty($this->updateHistory)){
-                    Yii::app()->db->createCommand()->insert("fed_project_history", array(
-                        'project_id'=>$this->id,
+                    Yii::app()->db->createCommand()->insert("fed_min_history", array(
+                        'min_id'=>$this->id,
                         'update_type'=>1,
                         'update_html'=>implode("<br/>",$this->updateHistory),
                         'update_json'=>json_encode($preRow),
@@ -352,15 +277,16 @@ class ProjectManageModel extends CFormModel
 
     public function saveData(){
         $this->updateHistory=array();
-        $this->preRow = self::getProjectRow($this->id);
+        $this->preRow = self::getMinRow($this->id);
         $uid = Yii::app()->user->id;
         $this->assign_str_user = FunctionSearch::getUserDisplayNameForArr($this->assign_user);
         switch ($this->getScenario()){
             case "new":
                 $this->lcu = $uid;
                 $this->lcd = date("Y-m-d H:i:s");
-                Yii::app()->db->createCommand()->insert("fed_project", array(
+                Yii::app()->db->createCommand()->insert("fed_min", array(
                     'menu_id'=>$this->menu_id,
+                    'project_id'=>$this->project_id,
                     'project_name'=>$this->project_name,
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
@@ -375,12 +301,12 @@ class ProjectManageModel extends CFormModel
                 ));
                 $this->id = Yii::app()->db->getLastInsertID();
                 $this->lenStr();
-                Yii::app()->db->createCommand()->update('fed_project', array(
+                Yii::app()->db->createCommand()->update('fed_min', array(
                     'project_code'=>$this->project_code
                 ), 'id=:id', array(':id'=>$this->id));
                 break;
             case "edit":
-                Yii::app()->db->createCommand()->update('fed_project', array(
+                Yii::app()->db->createCommand()->update('fed_min', array(
                     'project_name'=>$this->project_name,
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
@@ -393,10 +319,10 @@ class ProjectManageModel extends CFormModel
                 ), "id={$this->id}");
                 break;
             case "delete":
-                Yii::app()->db->createCommand()->delete('fed_project', 'id=:id', array(':id'=>$this->id));
-                Yii::app()->db->createCommand()->delete('fed_project_email', 'project_id=:id', array(':id'=>$this->id));
-                Yii::app()->db->createCommand()->delete('fed_project_history', 'project_id=:id', array(':id'=>$this->id));
-                Yii::app()->db->createCommand()->delete('fed_project_user', 'project_id=:id', array(':id'=>$this->id));
+                Yii::app()->db->createCommand()->delete('fed_min', 'id=:id', array(':id'=>$this->id));
+                Yii::app()->db->createCommand()->delete('fed_min_email', 'project_id=:id', array(':id'=>$this->id));
+                Yii::app()->db->createCommand()->delete('fed_min_history', 'project_id=:id', array(':id'=>$this->id));
+                Yii::app()->db->createCommand()->delete('fed_min_user', 'project_id=:id', array(':id'=>$this->id));
                 break;
             default:
                 break;
@@ -404,9 +330,9 @@ class ProjectManageModel extends CFormModel
         $this->saveEmailInfo();//保存邮箱权限
         $this->saveHistory();//生成历史记录
         $this->saveAssignUser();//多个员工跟进
-        $this->updateDocman('PROM');//保存附件
+        //$this->updateDocman('PROM');//保存附件
 
-        $this->sendEmail();//发送邮件
+        //$this->sendEmail();//发送邮件
 
         if($this->getScenario()=="new"){
             $this->setScenario("edit");
@@ -417,7 +343,7 @@ class ProjectManageModel extends CFormModel
         $emailModel = new Email();
         switch ($this->getScenario()){
             case "new"://新增
-                $subject = "[LBS-{$this->menu_name}] 新增项目《";
+                $subject = "[LBS-{$this->menu_name}] 新增小项目《";
                 $subject.=FunctionList::getProjectTypeStr($this->project_type);
                 $subject.="》{$this->project_name}";
                 $emailModel->setSubject($subject);
@@ -429,7 +355,7 @@ class ProjectManageModel extends CFormModel
                 if(empty($this->updateHistory)){
                     return false;//如果没有修改内容，不发送邮件
                 }
-                $subject = "[LBS-{$this->menu_name}] 项目修改《";
+                $subject = "[LBS-{$this->menu_name}] 小项目修改《";
                 $subject.=FunctionList::getProjectTypeStr($this->project_type);
                 $subject.="》{$this->project_name}";
                 $emailModel->setSubject($subject);
@@ -465,19 +391,19 @@ class ProjectManageModel extends CFormModel
             $uid = Yii::app()->user->id;
             foreach ($this->emailList as $row){
                 $emailInfo = Yii::app()->db->createCommand()->select("id,email_type")
-                    ->from("fed_project_email")
-                    ->where("project_id=:id and username=:username",
+                    ->from("fed_min_email")
+                    ->where("min_id=:id and username=:username",
                         array(":id"=>$this->id,":username"=>$row["username"])
                     )->queryRow();
                 if(!$emailInfo){ //如果不存在
-                    Yii::app()->db->createCommand()->insert("fed_project_email", array(
-                        'project_id'=>$this->id,
+                    Yii::app()->db->createCommand()->insert("fed_min_email", array(
+                        'min_id'=>$this->id,
                         'username'=>$row["username"],
                         'email_type'=>$row["emailType"],
                         'lcu'=>$uid,
                     ));
                 }elseif($row["emailType"]!=$emailInfo["email_type"]){
-                    Yii::app()->db->createCommand()->update('fed_project_email', array(
+                    Yii::app()->db->createCommand()->update('fed_min_email', array(
                         'email_type'=>$row["emailType"],
                     ), 'id=:id', array(':id'=>$row["id"]));
                     $this->updateHistory[]="<span>{$row["username"]}：".FunctionList::getProjectEmailTypeStr($emailInfo["email_type"])." 修改为 ".FunctionList::getProjectEmailTypeStr($row["emailType"])."</span>";
@@ -488,35 +414,10 @@ class ProjectManageModel extends CFormModel
 
     private function lenStr(){
         $code = strval($this->id);
-        $this->project_code = FunctionList::getMenuCodeForMin($this->menu_code);
+        $this->project_code = "MIN";
         for($i = 0;$i < 7-strlen($code);$i++){
             $this->project_code.="0";
         }
         $this->project_code .= $code;
-    }
-
-
-    public function getAjaxFileTable($id){
-        $this->id = $id;
-        $docman = new DocMan($this->docType,$id,get_class($this));
-        $docman->masterId = $this->docMasterId[strtolower($docman->docType)];
-        $html = $docman->ajaxGenTableFileList();//标的主附件
-        $msg = Yii::t('dialog','No File Record');
-        $rtn = "<tr><td>&nbsp;</td><td colspan=2>$msg</td></tr>";
-        $html = $html==$rtn?"":$html;
-        $rows = Yii::app()->db->createCommand()->select("id")->from("fed_project_assign")
-            ->where("project_id=:id",array(":id"=>$id))->order("lcd asc")->queryAll();
-        if($rows){
-            $infoModel = new AssignPlanModel("new");
-            foreach ($rows as $row){ //获取记录的附件
-                $docman = new DocMan($infoModel->docType,$row["id"],get_class($infoModel));
-                $docman->masterId = $infoModel->docMasterId[strtolower($docman->docType)];
-                $infoHtml= $docman->ajaxGenTableFileList();
-                $infoHtml = $infoHtml==$rtn?"":$infoHtml;
-                $html.= $infoHtml;
-            }
-        }
-        $html=empty($html)?$rtn:$html;
-        return $html;
     }
 }
