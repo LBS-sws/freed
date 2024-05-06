@@ -166,10 +166,9 @@ class AnalyzeProOneForm extends CFormModel
         $row = Yii::app()->db->createCommand()
             ->select("a.project_code,a.project_type,a.project_name,a.assign_plan,a.lcd,a.end_date,
             b.disp_name as lcu,
-            f.disp_name as assign_user")
+            a.assign_str_user as assign_user")
             ->from("fed_project a")
             ->leftJoin("security{$suffix}.sec_user b","a.lcu=b.username")
-            ->leftJoin("security{$suffix}.sec_user f","a.assign_user=f.username")
             ->where("a.id=:id",array(":id"=>$attr["project_id"]))
             ->queryRow();
         if($row){
@@ -196,10 +195,10 @@ class AnalyzeProOneForm extends CFormModel
             count(a.id) as project_num,
             sum(if(a.username=b.lcu,a.diff_timer,0)) as lcu_len,
             sum(if(a.username=b.lcu,1,0)) as lcu_num,
-            sum(if(a.username=b.assign_user,a.diff_timer,0)) as assign_user_len,
-            sum(if(a.username=b.assign_user,1,0)) as assign_user_num,
-            sum(if((a.username!=b.lcu and a.username!=b.assign_user),a.diff_timer,0)) as other_user_len,
-            sum(if((a.username!=b.lcu and a.username!=b.assign_user),1,0)) as other_user_num 
+            sum(if(FIND_IN_SET(a.username,b.assign_user),a.diff_timer,0)) as assign_user_len,
+            sum(if(FIND_IN_SET(a.username,b.assign_user),1,0)) as assign_user_num,
+            sum(if((a.username!=b.lcu and !FIND_IN_SET(a.username,b.assign_user)),a.diff_timer,0)) as other_user_len,
+            sum(if((a.username!=b.lcu and !FIND_IN_SET(a.username,b.assign_user)),1,0)) as other_user_num 
             ")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")

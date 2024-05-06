@@ -1,11 +1,7 @@
 <?php
 
-class AnalyzeUserOneForm extends CFormModel
+class StatisticProAllForm extends CFormModel
 {
-    public $menu_id;
-    public $menu_name;
-    public $menu_code;
-    public $code_pre="03";
 	/* User Fields */
     public $search_start_date;//查詢開始日期
     public $search_end_date;//查詢結束日期
@@ -16,6 +12,11 @@ class AnalyzeUserOneForm extends CFormModel
 	public $start_date;
 	public $end_date;
 	public $day_num=0;
+	public $menu_id;
+
+	public $total_all=0;
+	public $total_finish=0;
+	public $total_unfinished=0;
 
     public $data=array();
 
@@ -30,6 +31,7 @@ class AnalyzeUserOneForm extends CFormModel
 	public function attributeLabels()
 	{
 		return array(
+            'menu_id'=>Yii::t('freed','menu project'),
             'start_date'=>Yii::t('freed','start date'),
             'end_date'=>Yii::t('freed','end date'),
             'day_num'=>Yii::t('freed','day num'),
@@ -52,14 +54,7 @@ class AnalyzeUserOneForm extends CFormModel
             array('total_all,total_finish,total_unfinished','safe'),
             array('search_type','required'),
             array('search_type','validateDate'),
-            array('menu_id','validateMenu'),
         );
-    }
-
-    public function validateMenu($attribute, $params) {
-        if(!$this->retrieveMenuData($this->menu_id)){
-            $this->addError($attribute, "数据异常，请刷新重试");
-        }
     }
 
     public function validateDate($attribute, $params) {
@@ -114,20 +109,9 @@ class AnalyzeUserOneForm extends CFormModel
         );
     }
 
-    public function retrieveMenuData($menu_id){ //
-        $menu = Yii::app()->db->createCommand()->select("*")
-            ->from("fed_setting")
-            ->where("id =:id",array(":id"=>$menu_id))->queryRow();
-        if($menu){
-            $this->menu_id = $menu_id;
-            $this->menu_name = $menu["menu_name"];
-            $this->menu_code = $menu["menu_code"].$this->code_pre;
-            return true;
-        }
-        return false;
-    }
-
     public function retrieveData() {
+        $startDate = $this->start_date." 00:00:00";
+        $endDate = $this->end_date." 23:59:59";
         $data = array();
         $defMoreList = $this->defMoreList();
 
@@ -141,46 +125,45 @@ class AnalyzeUserOneForm extends CFormModel
                 $data[]=$temp;
             }
         }
+        $this->total_all=count($data);
+        $menuSql ="";
+        if(!empty($this->menu_id)){
+            $menuSql = " and menu_id='{$this->menu_id}'";
+        }
+        $this->total_finish=Yii::app()->db->createCommand()
+            ->select("count(id)")->from("fed_project")
+            ->where("assign_plan=100 and lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->queryScalar();
+        $this->total_unfinished=$this->total_all-$this->total_finish;
 
         $this->data = $data;
         $session = Yii::app()->session;
-        $session['analyzeUserOne_'.$this->menu_code] = $this->getCriteria();
+        $session['statisticProAll_01'] = $this->getCriteria();
         return true;
     }
 
     private function getProjectDetail($attr){
-        $startDate = $this->start_date." 00:00:00";
-        $endDate = $this->end_date." 23:59:59";
         $list = $attr;
-        $username = $attr["username"];
-        $list["dis_name"]=FunctionSearch::getUserDisplayName($username);
+        $suffix = Yii::app()->params['envSuffix'];
         $row = Yii::app()->db->createCommand()
-            ->select("
-            sum(if(a.lcu='{$username}',1,0)) as lcu_sum,
-            sum(if(FIND_IN_SET('{$username}',a.assign_user),1,0)) as assign_user_sum
+            ->select("a.menu_id,a.project_code,a.project_type,a.project_name,a.project_text,a.assign_plan,a.lcd,a.end_date,
+            b.disp_name as lcu,
+            f.menu_name,
+            a.assign_str_user as assign_user
             ")
             ->from("fed_project a")
-            ->where("a.menu_id=:id and 
-            (a.lcu='{$username}' or FIND_IN_SET('{$username}',a.assign_user)) and 
-            a.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
-            ->group("a.menu_id")
+            ->leftJoin("security{$suffix}.sec_user b","a.lcu=b.username")
+            ->leftJoin("fed_setting f","a.menu_id=f.id")
+            ->where("a.id=:id",array(":id"=>$attr["project_id"]))
             ->queryRow();
         if($row){
             foreach ($row as $key=>$item){
+                if($key == "project_text"){
+                    $item =preg_replace('/<img[^>]+>/i', '<span> [图片] </span>', $item);
+                }
                 $list[$key] = $item;
             }
         }
-        //作为项目其它人
-        $other_user_sum = Yii::app()->db->createCommand()
-            ->select("a.project_id")
-            ->from("fed_project_assign a")
-            ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.menu_id=:id and a.username='{$username}' and 
-            a.username!=b.lcu and !FIND_IN_SET(a.username,b.assign_user) and
-            b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
-            ->group("a.project_id")
-            ->queryRow();
-        $list["other_user_sum"] = $other_user_sum?count($other_user_sum):0;
         return $list;
     }
 
@@ -195,10 +178,13 @@ class AnalyzeUserOneForm extends CFormModel
     private function getProjectInfoRows(){
         $startDate = $this->start_date." 00:00:00";
         $endDate = $this->end_date." 23:59:59";
+        $menuSql ="";
+        if(!empty($this->menu_id)){
+            $menuSql = " and b.menu_id='{$this->menu_id}'";
+        }
         $rows = Yii::app()->db->createCommand()
-            ->select("a.username,
-            sum(a.diff_timer) as project_len,
-            count(a.username) as project_num,
+            ->select("a.project_id,
+            count(a.id) as project_num,
             sum(if(a.username=b.lcu,a.diff_timer,0)) as lcu_len,
             sum(if(a.username=b.lcu,1,0)) as lcu_num,
             sum(if(FIND_IN_SET(a.username,b.assign_user),a.diff_timer,0)) as assign_user_len,
@@ -208,9 +194,9 @@ class AnalyzeUserOneForm extends CFormModel
             ")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.menu_id=:id and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
-            ->group("a.username")
-            ->order("a.username desc")
+            ->where("b.lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->group("a.project_id")
+            ->order("b.menu_id asc,a.project_id desc")
             ->queryAll();
         return $rows;
     }
@@ -218,36 +204,101 @@ class AnalyzeUserOneForm extends CFormModel
     //設置默認值
     private function defMoreList(){
         $arr=array(
-            "username"=>0,//登录账号
-            "dis_name"=>0,//账号昵称
-            "project_sum"=>0,//项目总数量
+            "menu_name"=>0,//项目菜单
+            "project_id"=>0,//项目编号
+            "project_code"=>0,//项目编号
+            "project_type"=>0,//项目类别
+            "project_name"=>0,//项目名称
+            "project_text"=>0,//项目描述
+            "lcd"=>0,//建档时间
+            "end_date"=>0,//完成时间
+            "assign_plan"=>0,//进度
             "project_num"=>0,//总跟进次数
-            "project_len"=>0,//总跟进时长
+            "project_len"=>0,//项目总时长
 
-            "lcu_sum"=>0,//建档人项目数量
-            "lcu_num"=>0,//建档人跟进次数
+            "lcu"=>0,//建档人
             "lcu_len"=>0,//建档人跟进时长
+            "lcu_num"=>0,//建档人跟进次数
+            "lcu_rate"=>0,//建档人时长占比
 
-            "assign_user_sum"=>0,//跟进人项目数量
-            "assign_user_num"=>0,//跟进人跟进次数
-            "assign_user_len"=>0,//跟进人跟进时长
+            "assign_user"=>0,//跟进账号
+            "assign_user_len"=>0,//跟进账号跟进时长
+            "assign_user_num"=>0,//跟进账号跟进次数
+            "assign_user_rate"=>0,//跟进账号时长占比
 
-            "other_user_sum"=>0,//其它人项目数量
-            "other_user_num"=>0,//其它人跟进次数
-            "other_user_len"=>0,//其它人跟进时长
+            "other_user_len"=>0,//其它账号跟进时长
+            "other_user_num"=>0,//其它账号跟进次数
+            "other_user_rate"=>0,//其它账号时长占比
         );
         return $arr;
     }
 
     protected function resetTdRow(&$list,$bool=false){
-        $list["project_sum"] =$list["lcu_sum"];
-        $list["project_sum"]+=$list["assign_user_sum"];
-        $list["project_sum"]+=$list["other_user_sum"];
+        $list["project_type"] = FunctionList::getProjectTypeStr($list["project_type"]);
+        if($list["assign_plan"]==100){ //已完成
+            $list["project_len"] = strtotime($list["end_date"])-strtotime($list["lcd"]);
+        }else{
+            $list["project_len"] = "";
+            $list["end_date"] = "未完成";
+        }
+
+        /*
+        $list["lcu_rate"] = self::numberRate($list["lcu_len"],$list["project_len"]);
+        $list["assign_user_rate"] = self::numberRate($list["assign_user_len"],$list["project_len"]);
+        $list["other_user_rate"] = self::numberRate($list["other_user_len"],$list["project_len"]);
+        */
+    }
+
+    public static function numberRate($min,$count){
+        if(empty($count)){
+            return "";
+        }else{
+            $rate = ($min/$count)*100;
+            $rate = round($rate,1);
+            $rate.="%";
+            return $rate;
+        }
+    }
+
+    public static function showNum($num,$str){
+        if(in_array($str,array("project_len","other_user_len","assign_user_len","lcu_len"))){
+            $day = floor($num/(60*60*24));
+            $hour = ($num/(60*60))%24;
+            $minute = ($num/60)%60;
+            $second = $num%60;
+            $i=0;
+            $text = "";
+            if(!empty($day)){
+                $i++;
+                $text.=$day."天";
+            }
+            if(!empty($hour)){
+                $i++;
+                $text.=$hour."小时";
+            }
+            if($i<2&&!empty($minute)){
+                $i++;
+                $text.=$minute."分钟";
+            }
+            if($i<2&&!empty($second)){
+                $text.=$second."秒";
+            }
+            if(empty($text)){
+                if($str=="project_len"){
+                    return "待定";
+                }else{
+                    return 0;
+                }
+            }else{
+                return $text;
+            }
+        }
+        return $num;
     }
 
     //顯示表格內容
-    public function analyzeUserOneHtml(){
-        $html= '<table id="analyzeUserOne" class="table table-fixed table-condensed table-bordered table-hover">';
+    public function statisticProAllHtml(){
+        $html= '<table id="statisticProAll" class="table table-fixed table-condensed table-bordered table-hover">';
         $html.=$this->tableTopHtml();
         $html.=$this->tableBodyHtml();
         $html.=$this->tableFooterHtml();
@@ -257,31 +308,40 @@ class AnalyzeUserOneForm extends CFormModel
 
     private function getTopArr(){
         $topList=array(
-            array("name"=>Yii::t("freed","username"),"rowspan"=>2),//账号昵称
-            array("name"=>Yii::t("freed","project total"),"rowspan"=>2),//项目总数量
+            array("name"=>Yii::t("freed","menu project"),"rowspan"=>2),//板块
+            array("name"=>Yii::t("freed","project code"),"rowspan"=>2),//项目编号
+            array("name"=>Yii::t("freed","project type"),"rowspan"=>2),//项目类别
+            array("name"=>Yii::t("freed","project name"),"rowspan"=>2),//项目名称
+            array("name"=>Yii::t("freed","project description"),"rowspan"=>2),//项目描述
+            array("name"=>Yii::t("freed","File date"),"rowspan"=>2),//建档时间
+            array("name"=>Yii::t("freed","Finish date"),"rowspan"=>2),//完成时间
             array("name"=>Yii::t("freed","assign total"),"rowspan"=>2),//总跟进次数
-            array("name"=>Yii::t("freed","duration total"),"rowspan"=>2),//总跟进时长
+            array("name"=>Yii::t("freed","project duration"),"rowspan"=>2),//项目总时长
+            /*
             array("name"=>Yii::t("freed","apply user analyze"),"background"=>"#f7fd9d",
                 "colspan"=>array(
-                    array("name"=>Yii::t("freed","project number")),//项目数量
+                    array("name"=>Yii::t("freed","username")),//账号
                     array("name"=>Yii::t("freed","assign number")),//跟进次数
                     array("name"=>Yii::t("freed","assign duration")),//跟进时长
+                    array("name"=>Yii::t("freed","duration rate")),//时长占比
                 )
             ),//建档人分析
             array("name"=>Yii::t("freed","assign user analyze"),"background"=>"#C5D9F1",
                 "colspan"=>array(
-                    array("name"=>Yii::t("freed","project number")),//项目数量
+                    array("name"=>Yii::t("freed","username")),//账号
                     array("name"=>Yii::t("freed","assign number")),//跟进次数
                     array("name"=>Yii::t("freed","assign duration")),//跟进时长
+                    array("name"=>Yii::t("freed","duration rate")),//时长占比
                 )
             ),//跟进人分析
             array("name"=>Yii::t("freed","other user analyze"),"background"=>"#D9D9D9",
                 "colspan"=>array(
-                    array("name"=>Yii::t("freed","project number")),//项目数量
                     array("name"=>Yii::t("freed","assign number")),//跟进次数
                     array("name"=>Yii::t("freed","assign duration")),//跟进时长
+                    array("name"=>Yii::t("freed","duration rate")),//时长占比
                 )
             ),//其它人分析
+            */
         );
 
         return $topList;
@@ -337,7 +397,11 @@ class AnalyzeUserOneForm extends CFormModel
     private function tableHeaderWidth(){
         $html="<tr>";
         for($i=0;$i<$this->th_sum;$i++){
-            $width=90;
+            if(in_array($i,array(3,4))){
+                $width=200;
+            }else{
+                $width=83;
+            }
             $html.="<th class='header-width' data-width='{$width}' width='{$width}px'>{$i}</th>";
         }
         return $html."</tr>";
@@ -359,10 +423,13 @@ class AnalyzeUserOneForm extends CFormModel
     //获取td对应的键名
     private function getDataAllKeyStr(){
         $bodyKey = array(
-            "dis_name","project_sum","project_num","project_len",
-            "lcu_sum","lcu_num","lcu_len",
-            "assign_user_sum","assign_user_num","assign_user_len",
-            "other_user_sum","other_user_num","other_user_len",
+            "menu_name","project_code","project_type","project_name","project_text","lcd","end_date",
+            "project_num","project_len",
+            /*
+            "lcu","lcu_num","lcu_len","lcu_rate",
+            "assign_user","assign_user_num","assign_user_len","assign_user_rate",
+            "other_user_num","other_user_len","other_user_rate"
+            */
         );
         return $bodyKey;
     }
@@ -384,10 +451,14 @@ class AnalyzeUserOneForm extends CFormModel
                 foreach ($bodyKey as $keyStr){
                     $text = key_exists($keyStr,$row)?$row[$keyStr]:"0";
                     $tdClass = self::getTextColorForKeyStr($text,$keyStr);
-                    $exprData = self::tdClick($tdClass,$keyStr,$row["username"]);//点击后弹窗详细内容
+                    $exprData = self::tdClick($tdClass,$keyStr,$row["project_id"]);//点击后弹窗详细内容
 
-                    $text = AnalyzeProOneForm::showNum($text,$keyStr);
-                    $this->downJsonText["excel"][$forKey][$row['username']][$keyStr]=$text;
+                    $text = self::showNum($text,$keyStr);
+                    if($keyStr=="project_text"){//去除html标签
+                        $this->downJsonText["excel"][$forKey][$row['project_id']][$keyStr]=strip_tags($text);
+                    }else{
+                        $this->downJsonText["excel"][$forKey][$row['project_id']][$keyStr]=$text;
+                    }
                     $html.="<td class='{$tdClass}' {$exprData}><span>{$text}</span></td>";
                 }
                 $html.="</tr>";
@@ -397,12 +468,13 @@ class AnalyzeUserOneForm extends CFormModel
         }
         return $html;
     }
+
     public function tableFooterHtml(){
         $html="<tfoot>";
         if(!empty($this->data)){
             $html.="<tr class='tr-end'><td colspan='{$this->th_sum}'>&nbsp;</td></tr>";
         }else{
-            $html.="<tr class='tr-end'><td colspan='{$this->th_sum}'><h4>查询时间段内没有跟进项目</h4></td></tr>";
+            $html.="<tr class='tr-end'><td colspan='{$this->th_sum}'><h4>查询时间段内没有项目</h4></td></tr>";
         }
         $html.="</tfoot>";
         return $html;
@@ -417,13 +489,13 @@ class AnalyzeUserOneForm extends CFormModel
         $this->validateDate("","");
         $headList = $this->getTopArr();
         $excel = new DownSummary();
-        $excel->SetHeaderTitle(Yii::t("app","Username analyze"));
+        $excel->SetHeaderTitle(Yii::t("app","Project analyze"));
         $excel->SetHeaderString($this->start_date." ~ ".$this->end_date);
         $excel->init();
-        $excel->colTwo = 4;
+        $excel->colTwo = 7;
         $excel->setSummaryHeader($headList);
         $excel->setAttrDetailData($excelData);
-        $excel->outExcel(Yii::t("app","Username analyze"));
+        $excel->outExcel(Yii::t("app","Project analyze"));
     }
 
     protected function clickList(){
@@ -432,8 +504,8 @@ class AnalyzeUserOneForm extends CFormModel
         );
     }
 
-    private function tdClick(&$tdClass,$keyStr,$username){
-        $expr = " data-user='{$username}'";
+    private function tdClick(&$tdClass,$keyStr,$project_id){
+        $expr = " data-id='{$project_id}'";
         $list = $this->clickList();
         if(key_exists($keyStr,$list)){
             $tdClass.=" td_detail";

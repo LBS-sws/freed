@@ -89,6 +89,7 @@ return array(
     'Project analyze'=>'項目分析',
     'Username analyze'=>'賬號分析',
     'Join Project progress'=>'加入跟進系統',
+    'Comprehensive statistics'=>'綜合統計',
     //沈超添加結束
 );
 ?>

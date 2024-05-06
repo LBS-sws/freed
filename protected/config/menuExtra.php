@@ -11,4 +11,14 @@ return array(
             ),
         ),
     ),
+    'Comprehensive statistics'=>array(//综合统计
+        'access'=>'SA',
+        'icon'=>'fa-gavel',
+        'items'=>array(
+            'Project analyze'=>array(//项目分析
+                'access'=>'SA01',
+                'url'=>'/statisticProAll/index',
+            ),
+        ),
+    ),
 );

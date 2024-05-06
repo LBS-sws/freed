@@ -122,10 +122,14 @@ class MenuSetForm extends CFormModel
         if(!empty($this->id)){
             $id = $this->id;
         }
+        if(strlen($this->menu_code)>=5){
+            $message = "编号长度不能大于4";
+            $this->addError($attribute,$message);
+        }
         $row = Yii::app()->db->createCommand()->select("id")->from("fed_setting")
             ->where('menu_code=:menu_code and id!=:id',
                 array(':menu_code'=>$this->menu_code,':id'=>$id))->queryRow();
-        if($row||in_array($this->menu_code,array("TP","SC","SS","EM"))){
+        if($row||in_array($this->menu_code,array("TP","SC","SS","EM","SA"))){
             $message = "菜单编号已存在，请重新命名";
             $this->addError($attribute,$message);
         }

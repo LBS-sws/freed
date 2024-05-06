@@ -117,4 +117,17 @@ class FunctionSearch{
         }
         return $nameStr;
     }
+
+    //获取所有菜单
+    public static function getMenuAll(){
+        $list = array();
+        $rows = Yii::app()->db->createCommand()->select()->from("fed_setting")
+            ->where("id>0")->queryAll();
+        if($rows){
+            foreach ($rows as $row){
+                $list[$row["id"]] = $row["menu_name"];
+            }
+        }
+        return $list;
+    }
 }

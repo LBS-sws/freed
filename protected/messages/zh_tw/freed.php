@@ -122,5 +122,7 @@ return array(
     'min project status' => '小項目進展',
     'min assign plan' => '小項目進度',
     'add min project' => '增加',
+    'menu project' => '板塊',
+    '-- All --' => '-- 全部 --',
 );
 ?>
