@@ -204,7 +204,7 @@ class AnalyzeProOneForm extends CFormModel
             ->leftJoin("fed_project b","a.project_id=b.id")
             ->where("b.menu_id=:id and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->group("a.project_id")
-            ->order("a.project_id desc")
+            ->order("b.assign_plan asc,b.id desc")
             ->queryAll();
         return $rows;
     }

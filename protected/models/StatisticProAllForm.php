@@ -196,7 +196,7 @@ class StatisticProAllForm extends CFormModel
             ->leftJoin("fed_project b","a.project_id=b.id")
             ->where("b.lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
             ->group("a.project_id")
-            ->order("b.menu_id asc,a.project_id desc")
+            ->order("b.menu_id asc,b.assign_plan asc,b.id desc")
             ->queryAll();
         return $rows;
     }
