@@ -116,8 +116,11 @@ class StatisticProAllForm extends CFormModel
         $defMoreList = $this->defMoreList();
 
         $projectInfoRows = $this->getProjectInfoRows();
-        if($projectInfoRows){
-            foreach ($projectInfoRows as $infoRow){
+        $projectRows = $this->getProjectRows();
+        if($projectRows){
+            foreach ($projectRows as $idRow){
+                $pro_id = "".$idRow["project_id"];
+                $infoRow = key_exists($pro_id,$projectInfoRows)?$projectInfoRows[$pro_id]:array("project_id"=>$pro_id);
                 $infoRowDetail = $this->getProjectDetail($infoRow);
                 $temp = $defMoreList;
                 $this->addTemp($temp,$infoRowDetail);
@@ -146,7 +149,7 @@ class StatisticProAllForm extends CFormModel
         $list = $attr;
         $suffix = Yii::app()->params['envSuffix'];
         $row = Yii::app()->db->createCommand()
-            ->select("a.menu_id,a.project_code,a.project_type,a.project_name,a.project_text,a.assign_plan,a.lcd,a.end_date,
+            ->select("a.menu_id,a.project_code,a.plan_date,a.project_type,a.project_name,a.project_text,a.assign_plan,a.lcd,a.end_date,
             b.disp_name as lcu,
             f.menu_name,
             a.assign_str_user as assign_user
@@ -175,6 +178,21 @@ class StatisticProAllForm extends CFormModel
         }
     }
 
+    private function getProjectRows(){
+        $startDate = $this->start_date." 00:00:00";
+        $endDate = $this->end_date." 23:59:59";
+        $menuSql ="";
+        if(!empty($this->menu_id)){
+            $menuSql = " and menu_id='{$this->menu_id}'";
+        }
+        $rows = Yii::app()->db->createCommand()->select("id as project_id")
+            ->from("fed_project")
+            ->where("lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->order("assign_plan asc,menu_id asc,id desc")
+            ->queryAll();
+        return $rows;
+    }
+
     private function getProjectInfoRows(){
         $startDate = $this->start_date." 00:00:00";
         $endDate = $this->end_date." 23:59:59";
@@ -196,9 +214,15 @@ class StatisticProAllForm extends CFormModel
             ->leftJoin("fed_project b","a.project_id=b.id")
             ->where("b.lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
             ->group("a.project_id")
-            ->order("b.menu_id asc,b.assign_plan asc,b.id desc")
+            ->order("b.assign_plan asc,b.menu_id asc,b.id desc")
             ->queryAll();
-        return $rows;
+        $list = array();
+        if($rows){
+            foreach ($rows as $row){
+                $list[$row["project_id"]]=$row;
+            }
+        }
+        return $list;
     }
 
     //設置默認值
@@ -211,6 +235,7 @@ class StatisticProAllForm extends CFormModel
             "project_name"=>0,//项目名称
             "project_text"=>0,//项目描述
             "lcd"=>0,//建档时间
+            "plan_date"=>"",//计划完成日期
             "end_date"=>0,//完成时间
             "assign_plan"=>0,//进度
             "project_num"=>0,//总跟进次数
@@ -313,10 +338,12 @@ class StatisticProAllForm extends CFormModel
             array("name"=>Yii::t("freed","project type"),"rowspan"=>2),//项目类别
             array("name"=>Yii::t("freed","project name"),"rowspan"=>2),//项目名称
             array("name"=>Yii::t("freed","project description"),"rowspan"=>2),//项目描述
-            array("name"=>Yii::t("freed","File date"),"rowspan"=>2),//建档时间
+            array("name"=>Yii::t("freed","plan date"),"rowspan"=>2),//计划完成日期
+            //array("name"=>Yii::t("freed","File date"),"rowspan"=>2),//建档时间
             array("name"=>Yii::t("freed","Finish date"),"rowspan"=>2),//完成时间
             array("name"=>Yii::t("freed","assign total"),"rowspan"=>2),//总跟进次数
-            array("name"=>Yii::t("freed","project duration"),"rowspan"=>2),//项目总时长
+            array("name"=>Yii::t("freed","assign user"),"rowspan"=>2),//跟进人员
+            //array("name"=>Yii::t("freed","project duration"),"rowspan"=>2),//项目总时长
             /*
             array("name"=>Yii::t("freed","apply user analyze"),"background"=>"#f7fd9d",
                 "colspan"=>array(
@@ -423,8 +450,8 @@ class StatisticProAllForm extends CFormModel
     //获取td对应的键名
     private function getDataAllKeyStr(){
         $bodyKey = array(
-            "menu_name","project_code","project_type","project_name","project_text","lcd","end_date",
-            "project_num","project_len",
+            "menu_name","project_code","project_type","project_name","project_text","plan_date","end_date",
+            "project_num","assign_user",
             /*
             "lcu","lcu_num","lcu_len","lcu_rate",
             "assign_user","assign_user_num","assign_user_len","assign_user_rate",

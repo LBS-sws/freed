@@ -138,8 +138,11 @@ class AnalyzeProOneForm extends CFormModel
         $defMoreList = $this->defMoreList();
 
         $projectInfoRows = $this->getProjectInfoRows();
-        if($projectInfoRows){
-            foreach ($projectInfoRows as $infoRow){
+        $projectRows = $this->getProjectRows();
+        if($projectRows){
+            foreach ($projectRows as $idRow){
+                $pro_id = "".$idRow["project_id"];
+                $infoRow = key_exists($pro_id,$projectInfoRows)?$projectInfoRows[$pro_id]:array("project_id"=>$pro_id);
                 $infoRowDetail = $this->getProjectDetail($infoRow);
                 $temp = $defMoreList;
                 $this->addTemp($temp,$infoRowDetail);
@@ -187,6 +190,17 @@ class AnalyzeProOneForm extends CFormModel
         }
     }
 
+    private function getProjectRows(){
+        $startDate = $this->start_date." 00:00:00";
+        $endDate = $this->end_date." 23:59:59";
+        $rows = Yii::app()->db->createCommand()->select("id as project_id")
+            ->from("fed_project")
+            ->where("menu_id=:id and lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
+            ->order("assign_plan asc,id desc")
+            ->queryAll();
+        return $rows;
+    }
+
     private function getProjectInfoRows(){
         $startDate = $this->start_date." 00:00:00";
         $endDate = $this->end_date." 23:59:59";
@@ -206,7 +220,13 @@ class AnalyzeProOneForm extends CFormModel
             ->group("a.project_id")
             ->order("b.assign_plan asc,b.id desc")
             ->queryAll();
-        return $rows;
+        $list = array();
+        if($rows){
+            foreach ($rows as $row){
+                $list[$row["project_id"]]=$row;
+            }
+        }
+        return $list;
     }
 
     //設置默認值

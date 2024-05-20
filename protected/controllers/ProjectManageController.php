@@ -281,12 +281,13 @@ class ProjectManageController extends Controller
     }
 
     public function actionFileDownload($mastId, $docId, $fileId, $doctype) {
-        $sql = "select city_allow,apply_lcu from fed_project where id = $docId";
+        $sql = "select b.menu_code from fed_project a
+          LEFT JOIN fed_setting b on a.menu_id=b.id
+          where a.id = $docId";
         $row = Yii::app()->db->createCommand($sql)->queryRow();
         if ($row!==false) {
-            $citylist = Yii::app()->user->city_allow();
-            $uid = Yii::app()->user->id;
-            if (strpos($citylist, $row['city_allow']) !== false||$row["apply_lcu"]==$uid) {
+            $menuCode = $row["menu_code"]."01";
+            if (Yii::app()->user->validRWFunction($menuCode)) {
                 $docman = new DocMan($doctype,$docId,'ProjectManageModel');
                 $docman->masterId = $mastId;
                 $docman->fileDownload($fileId);
