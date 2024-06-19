@@ -135,7 +135,7 @@ class StatisticProAllForm extends CFormModel
         }
         $this->total_finish=Yii::app()->db->createCommand()
             ->select("count(id)")->from("fed_project")
-            ->where("assign_plan=100 and lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->where("assign_plan=100 and status_type=1 and lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
             ->queryScalar();
         $this->total_unfinished=$this->total_all-$this->total_finish;
 
@@ -187,7 +187,7 @@ class StatisticProAllForm extends CFormModel
         }
         $rows = Yii::app()->db->createCommand()->select("id as project_id")
             ->from("fed_project")
-            ->where("lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->where("status_type=1 and lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
             ->order("assign_plan asc,menu_id asc,id desc")
             ->queryAll();
         return $rows;
@@ -212,7 +212,7 @@ class StatisticProAllForm extends CFormModel
             ")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
+            ->where("b.status_type=1 and b.lcd BETWEEN '{$startDate}' and '{$endDate}' {$menuSql}")
             ->group("a.project_id")
             ->order("b.assign_plan asc,b.menu_id asc,b.id desc")
             ->queryAll();

@@ -38,8 +38,13 @@ $this->pageTitle=Yii::app()->name . ' - projectManage Form';
 				'submit'=>$backUrl));
 		?>
 <?php if ($model->scenario!='view'): ?>
-			<?php echo TbHtml::button('<span class="fa fa-upload"></span> '.Yii::t('misc','Save'), array(
-				'submit'=>Yii::app()->createUrl('projectManage/save')));
+            <?php if (empty($model->status_type)): ?>
+                <?php echo TbHtml::button('<span class="fa fa-save"></span> '.Yii::t('freed','Draft'), array(
+                    'submit'=>Yii::app()->createUrl('projectManage/draft')));
+                ?>
+            <?php endif ?>
+			<?php echo TbHtml::button('<span class="fa fa-upload"></span> '.Yii::t('freed','Publish'), array(
+				'submit'=>Yii::app()->createUrl('projectManage/publish')));
 			?>
 <?php endif ?>
 <?php if ($model->scenario!='new' && $model->scenario!='view'): ?>

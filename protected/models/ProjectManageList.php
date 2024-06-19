@@ -78,16 +78,17 @@ class ProjectManageList extends CListPageModel
 	public function retrieveDataByPage($pageNum=1)
 	{
 		$suffix = Yii::app()->params['envSuffix'];
+        $uid = Yii::app()->user->id;
 		$sql1 = "select a.*,b.disp_name as lcu_name 
                 from fed_project a 
                 LEFT JOIN security{$suffix}.sec_user b ON a.lcu=b.username
-                where a.menu_id={$this->menu_id}
+                where a.menu_id={$this->menu_id} AND (a.status_type=1 OR a.lcu = '{$uid}')
 			";
         $sql2 = "select count(a.id) 
                 from fed_project a 
                 LEFT JOIN security{$suffix}.sec_user b ON a.lcu=b.username
                 LEFT JOIN security{$suffix}.sec_user f ON a.assign_user=f.username
-                where a.menu_id={$this->menu_id}
+                where a.menu_id={$this->menu_id} AND (a.status_type=1 OR a.lcu = '{$uid}')
 			";
 		$clause = "";
 		if (!empty($this->searchField) && !empty($this->searchValue)) {

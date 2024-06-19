@@ -123,6 +123,11 @@ return array(
     'min assign plan' => '小項目進度',
     'add min project' => '增加',
     'menu project' => '板塊',
-    '-- All --' => '-- 全部 --',
+
+    'status type' => '項目狀態',
+    'Publish' => '發布',
+    'Publish Done' => '發布成功',
+    'Draft' => '草稿',
+    'Draft Done' => '保存草稿成功',
 );
 ?>

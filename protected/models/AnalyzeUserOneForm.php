@@ -160,7 +160,7 @@ class AnalyzeUserOneForm extends CFormModel
             sum(if(FIND_IN_SET('{$username}',a.assign_user),1,0)) as assign_user_sum
             ")
             ->from("fed_project a")
-            ->where("a.menu_id=:id and 
+            ->where("a.menu_id=:id and a.status_type=1 and 
             (a.lcu='{$username}' or FIND_IN_SET('{$username}',a.assign_user)) and 
             a.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->group("a.menu_id")
@@ -175,7 +175,7 @@ class AnalyzeUserOneForm extends CFormModel
             ->select("a.project_id")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.menu_id=:id and a.username='{$username}' and 
+            ->where("b.menu_id=:id and b.status_type=1 and a.username='{$username}' and 
             a.username!=b.lcu and !FIND_IN_SET(a.username,b.assign_user) and
             b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->group("a.project_id")
@@ -208,7 +208,7 @@ class AnalyzeUserOneForm extends CFormModel
             ")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.menu_id=:id and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
+            ->where("b.menu_id=:id and b.status_type=1 and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->group("a.username")
             ->order("a.username desc")
             ->queryAll();

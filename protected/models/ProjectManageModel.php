@@ -25,6 +25,8 @@ class ProjectManageModel extends CFormModel
     public $lcd;
     public $lud;
     public $urgency;
+    public $old_status_type;//0：草稿  1：发布
+    public $status_type=0;//0：草稿  1：发布
 
     public $emailList=array();
     protected $updateHistory=array();
@@ -61,6 +63,7 @@ class ProjectManageModel extends CFormModel
             'project_text'=>Yii::t('freed','project description'),
             'project_status'=>Yii::t('freed','project status'),
             'assign_plan'=>Yii::t('freed','assign plan'),
+            'status_type'=>Yii::t('freed','status type'),
             'urgency'=>Yii::t('freed','urgency'),
             'lcu'=>Yii::t('freed','File builder'),
             'lcd'=>Yii::t('freed','File date'),
@@ -77,16 +80,29 @@ class ProjectManageModel extends CFormModel
     public function rules()
     {
         return array(
-            array('id,menu_id,plan_date,plan_start_date,project_code,project_name,project_type,project_text,emailList,
+            array('id,menu_id,status_type,plan_date,plan_start_date,project_code,project_name,project_type,project_text,emailList,
             project_status,assign_plan,urgency,current_user,assign_user,start_date,end_date,lcu,luu,lcd,lud','safe'),
             array('menu_id,project_name,project_type,project_text,assign_user','required'),
             array('menu_id','validateMenuID'),
+            array('id','validateID','on'=>array("delete","edit")),
             array('id','validateDelete','on'=>array("delete")),
             array('project_name','validateName','on'=>array("edit","new")),
             array('emailList','validateEmailList','on'=>array("edit","new")),
 
             array('files, removeFileId, docMasterId','safe'),
         );
+    }
+
+    public function validateID($attribute, $params){
+        $row = Yii::app()->db->createCommand()->select("*")->from("fed_project")
+            ->where('id=:id',array(':id'=>$this->id))->queryRow();
+        if($row){
+            $this->old_status_type = $row["status_type"];
+            $this->start_date = $row["start_date"];
+        }else{
+            $message = "项目不存在，请重试";
+            $this->addError($attribute,$message);
+        }
     }
 
     public function validateDelete($attribute, $params){
@@ -183,6 +199,7 @@ class ProjectManageModel extends CFormModel
             $this->menu_name = $row["menu_name"];
             $this->menu_code = $row["menu_code"].$this->code_pre;
 
+            $this->status_type = $row["status_type"];
             $this->project_code = $row["project_code"];
             $this->project_name = $row["project_name"];
             $this->project_type = $row["project_type"];
@@ -277,11 +294,13 @@ class ProjectManageModel extends CFormModel
     }
 
     private function updateStrList(){
-        return array("project_type","project_name","assign_user","plan_date","plan_start_date","urgency");
+        return array("status_type","project_type","project_name","assign_user","plan_date","plan_start_date","urgency");
     }
 
     private function updateStrValue($itemStr,$value){
         switch ($itemStr){
+            case "status_type":
+                return empty($value)?Yii::t("freed","Draft"):Yii::t("freed","Publish");
             case "project_type":
                 return FunctionList::getProjectTypeStr($value);
             case "assign_user":
@@ -324,7 +343,7 @@ class ProjectManageModel extends CFormModel
                 Yii::app()->db->createCommand()->insert("fed_project_history", array(
                     'project_id'=>$this->id,
                     'update_type'=>2,
-                    'update_html'=>"新增",
+                    'update_html'=>"新增(".$this->updateStrValue("status_type",$this->status_type).")",
                     'lcu'=>$uid,
                 ));
                 break;
@@ -355,12 +374,14 @@ class ProjectManageModel extends CFormModel
         $this->preRow = self::getProjectRow($this->id);
         $uid = Yii::app()->user->id;
         $this->assign_str_user = FunctionSearch::getUserDisplayNameForArr($this->assign_user);
+        $nowDate = date_format(date_create(),"Y-m-d H:i:s");
         switch ($this->getScenario()){
             case "new":
                 $this->lcu = $uid;
-                $this->lcd = date("Y-m-d H:i:s");
+                $this->lcd = $nowDate;
                 Yii::app()->db->createCommand()->insert("fed_project", array(
                     'menu_id'=>$this->menu_id,
+                    'status_type'=>$this->status_type,
                     'project_name'=>$this->project_name,
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
@@ -381,6 +402,7 @@ class ProjectManageModel extends CFormModel
                 break;
             case "edit":
                 Yii::app()->db->createCommand()->update('fed_project', array(
+                    'status_type'=>$this->status_type,
                     'project_name'=>$this->project_name,
                     'project_type'=>$this->project_type,
                     'project_text'=>$this->project_text,
@@ -389,14 +411,15 @@ class ProjectManageModel extends CFormModel
                     'plan_date'=>empty($this->plan_date)?null:$this->plan_date,
                     'plan_start_date'=>empty($this->plan_start_date)?null:$this->plan_start_date,
                     'urgency'=>empty($this->urgency)?null:$this->urgency,
+                    'start_date'=>empty($this->old_status_type)?$nowDate:$this->start_date,
                     'luu'=>$uid,
                 ), "id={$this->id}");
                 break;
             case "delete":
-                Yii::app()->db->createCommand()->delete('fed_project', 'id=:id', array(':id'=>$this->id));
                 Yii::app()->db->createCommand()->delete('fed_project_email', 'project_id=:id', array(':id'=>$this->id));
                 Yii::app()->db->createCommand()->delete('fed_project_history', 'project_id=:id', array(':id'=>$this->id));
                 Yii::app()->db->createCommand()->delete('fed_project_user', 'project_id=:id', array(':id'=>$this->id));
+                Yii::app()->db->createCommand()->delete('fed_project', 'id=:id', array(':id'=>$this->id));
                 break;
             default:
                 break;
@@ -406,7 +429,9 @@ class ProjectManageModel extends CFormModel
         $this->saveAssignUser();//多个员工跟进
         $this->updateDocman('PROM');//保存附件
 
-        $this->sendEmail();//发送邮件
+        if(!empty($this->status_type)){
+            $this->sendEmail();//发送邮件
+        }
 
         if($this->getScenario()=="new"){
             $this->setScenario("edit");

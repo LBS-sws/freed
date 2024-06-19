@@ -43,7 +43,7 @@ class ProjectManageController extends Controller
     {
         return array(
             array('allow',
-                'actions'=>array('add','save','saveAssign','delete',
+                'actions'=>array('add','publish','draft','saveAssign','delete',
                     'uploadImgArea','fileRemove','fileupload'),
                 'expression'=>array('ProjectManageController','allowReadWrite'),
             ),
@@ -134,14 +134,33 @@ class ProjectManageController extends Controller
     }
 
 
-    public function actionSave()
+    public function actionPublish()
     {
         if (isset($_POST['ProjectManageModel'])) {
             $model = new ProjectManageModel($_POST['ProjectManageModel']['scenario']);
             $model->attributes = $_POST['ProjectManageModel'];
             if ($model->validate()&&$this->validateMenuCode($model->menu_code)) {
+                $model->status_type=1;
                 $model->saveData();
-                Dialog::message(Yii::t('dialog','Information'), Yii::t('dialog','Save Done'));
+                Dialog::message(Yii::t('dialog','Information'), Yii::t('freed','Publish Done'));
+                $this->redirect(Yii::app()->createUrl('ProjectManage/edit',array('index'=>$model->id)));
+            } else {
+                $message = CHtml::errorSummary($model);
+                Dialog::message(Yii::t('dialog','Validation Message'), $message);
+                $this->render('form',array('model'=>$model,));
+            }
+        }
+    }
+
+    public function actionDraft()
+    {
+        if (isset($_POST['ProjectManageModel'])) {
+            $model = new ProjectManageModel($_POST['ProjectManageModel']['scenario']);
+            $model->attributes = $_POST['ProjectManageModel'];
+            if ($model->validate()&&$this->validateMenuCode($model->menu_code)) {
+                $model->status_type=0;
+                $model->saveData();
+                Dialog::message(Yii::t('dialog','Information'), Yii::t('freed','Draft Done'));
                 $this->redirect(Yii::app()->createUrl('ProjectManage/edit',array('index'=>$model->id)));
             } else {
                 $message = CHtml::errorSummary($model);

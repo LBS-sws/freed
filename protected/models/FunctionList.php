@@ -177,6 +177,9 @@ class FunctionList
 
     public static function getTableColor($row){
         //bg-yellow
+        if(empty($row["status_type"])){
+            return " text-red";//草稿
+        }
         $trClass = "";
         if($row["project_status"]==9){//已完成
             $trClass.=" text-muted";

@@ -153,7 +153,7 @@ class AnalyzeProOneForm extends CFormModel
         $this->total_all=count($data);
         $this->total_finish=Yii::app()->db->createCommand()
             ->select("count(id)")->from("fed_project")
-            ->where("menu_id=:id and assign_plan=100 and lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
+            ->where("menu_id=:id and status_type=1 and assign_plan=100 and lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->queryScalar();
         $this->total_unfinished=$this->total_all-$this->total_finish;
 
@@ -195,7 +195,7 @@ class AnalyzeProOneForm extends CFormModel
         $endDate = $this->end_date." 23:59:59";
         $rows = Yii::app()->db->createCommand()->select("id as project_id")
             ->from("fed_project")
-            ->where("menu_id=:id and lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
+            ->where("menu_id=:id and status_type=1 and lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->order("assign_plan asc,id desc")
             ->queryAll();
         return $rows;
@@ -216,7 +216,7 @@ class AnalyzeProOneForm extends CFormModel
             ")
             ->from("fed_project_assign a")
             ->leftJoin("fed_project b","a.project_id=b.id")
-            ->where("b.menu_id=:id and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
+            ->where("b.menu_id=:id and b.status_type=1 and b.lcd BETWEEN '{$startDate}' and '{$endDate}'",array(":id"=>$this->menu_id))
             ->group("a.project_id")
             ->order("b.assign_plan asc,b.id desc")
             ->queryAll();
