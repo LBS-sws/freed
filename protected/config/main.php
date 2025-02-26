@@ -73,7 +73,7 @@ return array(
 
 		// uncomment the following to use a MySQL database
 		'db'=>array(
-            'connectionString' => 'mysql:host=localhost;dbname=freeddev',
+            'connectionString' => 'mysql:host=59.37.134.206;dbname=freed',
             'emulatePrepare' => true,
             'username' => 'root',
             'password' => 'swisher168',
@@ -141,7 +141,7 @@ return array(
 		'version'=>'1.0.0',
 		'docmanPath'=>'/docman/dev',
 		'systemId'=>'freed',
-		'envSuffix'=>'dev',
+		'envSuffix'=>'',
         'employeeCode'=>'4',
         'yearLeave'=>'employ', //employee:年假根據員工信息的年假計算
         'retire'=>true, //退休年齡判斷（暫時只區分台灣地區 false：台灣）

@@ -85,6 +85,7 @@ return array(
     'Go Top'=>'往頁頂',
     'Announcement'=>'公告',
     'Your ranking is:'=>'你當前的段位為:',
+    'Again New Password'=>'再次輸入新密碼',
 );
 
 ?>
