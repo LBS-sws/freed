@@ -153,8 +153,11 @@ class SiteController extends Controller
 	 */
 	public function actionLogout()
 	{
-		Yii::app()->user->logout();
-		$this->redirect(Yii::app()->homeUrl);
+        Yii::app()->user->logout();
+        $url = Yii::app()->params['MHCurlRootURL']."/cas/logout";
+        //$result = file_get_contents($url);//单点登出门户网站
+        $this->redirect($url);
+        //$this->redirect(Yii::app()->homeUrl);
 	}
 
 	public function actionPassword()
