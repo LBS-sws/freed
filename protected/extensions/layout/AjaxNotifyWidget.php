@@ -21,11 +21,13 @@ $.ajax({
 			data.forEach(function (arrayItem) {
 				total += parseInt(arrayItem.count);
 				switch (arrayItem.type) {
-					case 'NOTI':
+					case "2":
+				console.log(arrayItem.type);
 						$('#mm_note_msg').html('<a href="$messageurl"><i class="fa fa-info-circle text-blue"></i> '
 							+arrayItem.count+' $msg4 </a>');
 						break;
-					case 'ACTN':
+					case "1":
+				console.log(arrayItem.type);
 						$('#mm_note_act').html('<a href="$actionurl"><i class="fa fa-rocket text-red"></i> '
 							+arrayItem.count+' $msg3 </a>');
 						break;

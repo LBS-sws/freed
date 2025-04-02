@@ -99,6 +99,8 @@ class ProjectManageModel extends CFormModel
         if($row){
             $this->old_status_type = $row["status_type"];
             $this->start_date = $row["start_date"];
+            $this->assign_plan = $row["assign_plan"];
+            $this->current_user = $row["current_user"];
         }else{
             $message = "项目不存在，请重试";
             $this->addError($attribute,$message);
@@ -375,6 +377,8 @@ class ProjectManageModel extends CFormModel
         $uid = Yii::app()->user->id;
         $this->assign_str_user = FunctionSearch::getUserDisplayNameForArr($this->assign_user);
         $nowDate = date_format(date_create(),"Y-m-d H:i:s");
+        $connection = Yii::app()->db;
+        $transaction=$connection->beginTransaction();
         switch ($this->getScenario()){
             case "new":
                 $this->lcu = $uid;
@@ -430,12 +434,60 @@ class ProjectManageModel extends CFormModel
         $this->updateDocman('PROM');//保存附件
 
         if(!empty($this->status_type)){
-            $this->sendEmail();//发送邮件
+            //$this->sendEmail();//发送邮件
+            $this->sendFlow();//发送邮件
         }
 
+        $transaction->commit();
         if($this->getScenario()=="new"){
             $this->setScenario("edit");
         }
+    }
+
+    protected function sendFlow(){
+        $flowModel = new CNoticeFlowModel($this->menu_code,$this->id);
+        $flowModel->setMB_PC_Url("projectManage/view",array("index"=>$this->id));
+        switch ($this->getScenario()){
+            case "new"://新增
+                $subject = "[LBS-{$this->menu_name}] 新增项目《";
+                $subject.=FunctionList::getProjectTypeStr($this->project_type);
+                $subject.="》{$this->project_name}";
+                $flowModel->setSubject($subject);
+                $message=ProjectEmailHtml::projectEmailHtmlForNew($this);
+                $flowModel->setMessage($message);
+                $proType=array(1,2);
+                break;
+            case "edit"://修改
+                if(empty($this->updateHistory)){
+                    return false;//如果没有修改内容，不发送邮件
+                }
+                $subject = "[LBS-{$this->menu_name}] 项目修改《";
+                $subject.=FunctionList::getProjectTypeStr($this->project_type);
+                $subject.="》{$this->project_name}";
+                $flowModel->setSubject($subject);
+                $message=ProjectEmailHtml::projectEmailHtmlForUpdate($this);
+                $flowModel->setMessage($message);
+                $proType=array(1);
+                break;
+            default:
+                return false;
+        }
+        $flowModel->addEmailToLcuList($this->assign_user);
+        $sendList=array();
+        if($this->assign_plan!=100){
+            $flowModel->note_type=1;//审核流程
+            $flowModel->saveFlowAll('',$this->menu_code);
+            $sendList = array(
+                "to_user"=>$flowModel->to_user,
+                "to_addr"=>$flowModel->to_addr,
+            );
+        }
+        $flowModel->note_type=2;//通知流程
+        $flowModel->addEmailToLcu($this->lcu);
+        $flowModel->addEmailToProjectAndType($this->id,$proType);
+        $flowModel->notEmailToLcu(Yii::app()->user->id);
+        $flowModel->notSendList($sendList);
+        $flowModel->saveNoticeAll();
     }
 
     protected function sendEmail(){

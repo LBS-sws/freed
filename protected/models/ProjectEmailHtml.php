@@ -18,7 +18,7 @@ class ProjectEmailHtml
     protected function styleTwoHtml()
     {
         $metaHtml = '<style>';
-        $metaHtml.= 'small {font-size: 65%;color: #777;}';
+        //$metaHtml.= 'small {font-size: 65%;color: #777;}';
         $metaHtml.= '.email-container { min-width: 375px !important; padding:10px 0px 20px 0px;}';
         $metaHtml.= '.ml-10{ margin-left:10px;}';
         $metaHtml.= '.div-box{

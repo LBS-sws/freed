@@ -312,6 +312,7 @@ var config_edit={
       removeButtons: 'PasteFromWord'
 };
 var assignEditor = CKEDITOR.replace('assign_text',config_edit);
+//CKEDITOR.replace('update_text',config_edit);
 
 $('#quick').change(function(){
     var assign_plan = $(this).val();

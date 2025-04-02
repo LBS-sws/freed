@@ -111,20 +111,7 @@ class AjaxController extends Controller
 	public function actionNotify() {
 		$rtn = array();
 		if (!Yii::app()->user->isGuest) {
-			$uid = Yii::app()->user->id;
-			$sysid = Yii::app()->params['systemId'];
-			$suffix = Yii::app()->params['envSuffix'];
-
-			$sql = "select a.note_type, count(a.id) as num
-				from swoper$suffix.swo_notification a, swoper$suffix.swo_notification_user b 
-				where b.username='$uid' and a.system_id='$sysid'
-				and a.id=b.note_id and b.status<>'C'
-				group by a.note_type
-			";
-			$rows = Yii::app()->db->createCommand($sql)->queryAll();
-			foreach ($rows as $row) {
-				$rtn[] = array('type'=>$row['note_type'],'count'=>$row['num']);
-			}
+            $rtn = NoticeForm::getNoticeAjax();
 		}
 		echo json_encode($rtn);
 		Yii::app()->end();

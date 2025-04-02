@@ -24,6 +24,7 @@ class AssignPlanModel extends CFormModel
     public $lcd;
     public $project_lcu;
     public $assign_user;
+    public $current_user;
 
     protected $code_pre="01";
 
@@ -63,7 +64,7 @@ class AssignPlanModel extends CFormModel
 
     public function validateProjectID($attribute, $params){
         $row = Yii::app()->db->createCommand()
-            ->select("a.project_type,a.project_name,a.lcu,a.assign_user,a.start_date,a.id,a.menu_id,b.menu_code,b.menu_name")
+            ->select("a.current_user,a.project_type,a.project_name,a.lcu,a.assign_user,a.start_date,a.id,a.menu_id,b.menu_code,b.menu_name")
             ->from("fed_project a")
             ->leftJoin("fed_setting b","a.menu_id=b.id")
             ->where('a.id=:id',array(':id'=>$this->project_id))->queryRow();
@@ -79,6 +80,7 @@ class AssignPlanModel extends CFormModel
             $this->menu_id = $row["menu_id"];
             $this->menu_name = $row["menu_name"];
             $this->menu_code = $row["menu_code"].$this->code_pre;
+            $this->current_user = $row["current_user"];
             $this->lcd = date("Y-m-d H:i:s");
         }
     }
@@ -217,6 +219,8 @@ class AssignPlanModel extends CFormModel
     }
 
     public function saveData(){
+        $connection = Yii::app()->db;
+        $transaction=$connection->beginTransaction();
         $this->computePlan();
         $uid = Yii::app()->user->id;
         switch ($this->getScenario()){
@@ -255,7 +259,63 @@ class AssignPlanModel extends CFormModel
 
         $this->computeProject();
 
-        $this->sendEmail();//发送邮件
+        $this->sendFlow();//发送邮件
+        //$this->sendEmail();//发送邮件
+        $transaction->commit();
+    }
+
+    protected function sendFlow(){
+        $flowModel = new CNoticeFlowModel($this->menu_code,$this->project_id);
+        $flowModel->setMB_PC_Url("projectManage/view",array("index"=>$this->project_id));
+        $uid = Yii::app()->user->id;
+        switch ($this->getScenario()){
+            case "new"://新增
+                if($this->assign_plan==100){ //完成
+                    $subject = "[LBS-{$this->menu_name}] 已完成《";
+                    $status = array(1,2,3);
+                }else{
+                    $subject = "[LBS-{$this->menu_name}] 项目跟进《";
+                    $status = array(1);
+                }
+                $subject.=FunctionList::getProjectTypeStr($this->project_type);
+                $subject.="》{$this->project_name}";
+                $flowModel->setSubject($subject);
+                $rows = $this->getAssignHistoryNotID();
+                $message=ProjectEmailHtml::projectEmailHtmlForAssign($this,$rows);
+                $flowModel->setMessage($message);
+                break;
+            case "edit"://修改
+                return false;
+            default:
+                return false;
+        }
+        $sendList = array();
+        if($this->assign_plan==100){ //项目未完成
+            $flowModel->setOwerNumForUsername($this->project_lcu);
+            $flowModel->sendFinishFlow($this->menu_code);
+        }else{
+            if($this->project_lcu==$uid){ //录入人写了跟进事项
+                $flowModel->note_type=1;//审核流程
+                $flowModel->addEmailToLcuList($this->assign_user);
+                $flowModel->saveFlowAll('',$this->menu_code);
+            }elseif(in_array($uid,$this->assign_user)){ //跟进人写了跟进事项
+                $flowModel->note_type=1;//审核流程
+                $flowModel->addEmailToLcu($this->project_lcu);
+                $flowModel->saveFlowAll('',$this->menu_code);
+            }
+            $sendList = array(
+                "to_user"=>$flowModel->to_user,
+                "to_addr"=>$flowModel->to_addr,
+            );
+        }
+        $flowModel->note_type=2;//通知流程
+        $flowModel->addEmailToProjectAndType($this->project_id,$status);
+        $flowModel->addEmailToLcu($this->project_lcu);
+        $flowModel->addEmailToLcuList($this->assign_user);
+        $flowModel->notEmailToLcu(Yii::app()->user->id);
+        $flowModel->notSendList($sendList);
+        $flowModel->saveNoticeAll();
+        return true;
     }
 
     protected function sendEmail(){

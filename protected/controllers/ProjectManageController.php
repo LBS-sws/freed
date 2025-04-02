@@ -49,7 +49,7 @@ class ProjectManageController extends Controller
             ),
             array('allow',
                 'actions'=>array('index','view','edit','ajaxDetail','fileDownload','ajaxFileTable'),
-                'expression'=>array('ProjectManageController','allowReadOnly'),
+                'expression'=>array('ProjectManageController','allowRead'),
             ),
             array('deny',  // deny all users
                 'users'=>array('*'),
@@ -94,7 +94,7 @@ class ProjectManageController extends Controller
     }
 
     public static function allowRead() {
-        return true;
+        return !Yii::app()->user->isGuest;
     }
 
     //详情列表的異步請求
